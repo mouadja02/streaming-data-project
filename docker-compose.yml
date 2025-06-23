@@ -109,6 +109,8 @@ services:
     container_name: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres_init:/docker-entrypoint-initdb.d
     environment:
       - POSTGRES_USER=airflow
       - POSTGRES_PASSWORD=airflow
@@ -124,14 +126,15 @@ services:
     image: adminer
     container_name: adminer
     ports:
-      - "8081:8080"
+      - "8082:8080"
     networks:
       - confluent
 
+  
   webserver:
     image: apache/airflow:2.6.0-python3.9
-    command: webserver
-    entrypoint: ['/opt/airflow/script/entrypoint.sh']
+    entrypoint: ["/opt/airflow/script/entrypoint.sh"]
+    command: "webserver"
     depends_on:
       - postgres
     environment:
@@ -160,6 +163,8 @@ services:
 
   scheduler:
     image: apache/airflow:2.6.0-python3.9
+    entrypoint: ["/opt/airflow/script/entrypoint.sh"]
+    command: "scheduler"
     depends_on:
       webserver:
         condition: service_healthy
@@ -173,7 +178,6 @@ services:
       - EXECUTOR=Sequential
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       - AIRFLOW_WEBSERVER_SECRET_KEY=this_is_a_very_secured_key
-    command: bash -c "pip install -r ./requirements.txt && airflow db upgrade && airflow scheduler"
     networks:
       - confluent
 
@@ -199,8 +203,8 @@ services:
       SPARK_WORKER_CORES: 2
       SPARK_WORKER_MEMORY: 1g
       SPARK_MASTER_URL: spark://spark-master:7077
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     networks:
       - confluent
 

@@ -8,7 +8,7 @@ SUPERSET_WEBSERVER_PORT = 8088
 SUPERSET_WEBSERVER_TIMEOUT = 60
 
 # Postgres database connection
-SQLALCHEMY_DATABASE_URI = 'postgresql://airflow:airflow@postgres:5432/airflow'
+SQLALCHEMY_DATABASE_URI = 'postgresql://airflow:airflow@postgres:5432/superset'
 
 # A secret key that will be used for securely signing the session cookie
 SECRET_KEY = os.environ.get('SUPERSET_SECRET_KEY', 'this_is_a_default_secret_key')

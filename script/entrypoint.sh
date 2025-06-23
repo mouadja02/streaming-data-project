@@ -2,21 +2,22 @@
 set -e
 
 if [ -e "/opt/airflow/requirements.txt" ]; then
-  $(command python) pip install --upgrade pip
   $(command -v pip) install --user -r requirements.txt
 fi
 
-if [ ! -f "/opt/airflow/airflow.db" ]; then
-  airflow db init && \
+if [ "$1" = "webserver" ]; then
+  airflow db upgrade
+  exec airflow webserver
+elif [ "$1" = "scheduler" ]; then
+  # Give the webserver time to start
+  sleep 10
+  airflow db init
   airflow users create \
     --username admin \
     --firstname admin \
     --lastname admin \
     --role Admin \
     --email admin@example.com \
-    --password admin
+    --password admin || true
+  exec airflow scheduler
 fi
-
-$(command -v airflow) db upgrade
-
-exec airflow webserver

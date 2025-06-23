@@ -81,17 +81,25 @@ docker-compose up -d --build
 
 ### 4. Accessing the Services
 
--   **Airflow Web UI**: `http://localhost:8080` (user: `airflow`, pass: `airflow`)
--   **Superset Web UI**: `http://localhost:8088` (you will need to run commands to create an admin user first)
--   **Adminer**: `http://localhost:8081` (for browsing the Postgres DB used by Airflow/Superset)
+-   **Airflow Web UI**: `http://localhost:8080` (user: `admin`, pass: `admin`)
+-   **Superset Web UI**: `http://localhost:8088`
+-   **Adminer**: `http://localhost:8082` (for browsing the Postgres DB used by Airflow/Superset)
 -   **Confluent Control Center**: `http://localhost:9021` (for managing Kafka)
 
-To create a Superset admin user:
-```bash
-docker-compose exec superset superset fab create-admin
-```
-Follow the prompts to create your user. After that, you'll need to initialize the database:
-```bash
-docker-compose exec superset superset db upgrade
-docker-compose exec superset superset init
-``` 
+### 5. Initial Superset Setup
+
+To use Superset, you must first create an admin user and initialize its database. Run the following commands in your terminal:
+
+1.  **Create Admin User**:
+    ```bash
+    docker-compose exec superset superset fab create-admin
+    ```
+    Follow the prompts to create your user.
+
+2.  **Initialize the Database**:
+    ```bash
+    docker-compose exec superset superset db upgrade
+    docker-compose exec superset superset init
+    ```
+
+After completing these steps, you can log in to the Superset UI with the credentials you created. 
