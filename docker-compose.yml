@@ -105,29 +105,40 @@ services:
       retries: 5
 
   spark-master:
-    image: bitnami/spark:latest
-    command: bin/spark-class org.apache.spark.deploy.master.Master
+    image: bitnami/spark:3.4.1
+    container_name: spark-master
     ports:
-      - "9090:8080"
+      - "8080:8080"
       - "7077:7077"
-    networks:
-      - confluent
     environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262
+    networks:
+      - confluent
 
   spark-worker:
-    image: bitnami/spark:latest
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    image: bitnami/spark:3.4.1
+    container_name: spark-worker
     depends_on:
       - spark-master
     environment:
-      SPARK_MODE: worker
-      SPARK_WORKER_CORES: 2
-      SPARK_WORKER_MEMORY: 1g
-      SPARK_MASTER_URL: spark://spark-master:7077
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.1,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262
     networks:
       - confluent
 

@@ -1,10 +1,8 @@
-# Real-Time Data-Engineering-Project-on-AWS
+# Real-Time Data Pipeline Project
 
-This project demonstrates a real-time data engineering pipeline using a modern, scalable tech stack. The core idea is to stream data from a public API, process it with Spark, and store it in a data lake on AWS S3.
+A sequential data pipeline that fetches user data from an external API, streams it through Apache Kafka, and processes it with either Apache Spark or a simple Kafka consumer, outputting structured data files.
 
-## Architecture
-
-The architecture is designed to be simple and robust. Core services like Kafka and Spark run in Docker, while the data producer and consumer scripts are run locally (e.g., in WSL). This provides a flexible development environment.
+## 🏗️ Architecture
 
 ```mermaid
 graph TD;
@@ -28,82 +26,261 @@ graph TD;
     C -- "Submits job to" --> D;
 ```
 
-### Workflow
+### Pipeline Flow
 
-1.  **Run Services**: The backing services (Kafka, Zookeeper, Spark, etc.) are started using `docker-compose`.
-2.  **Produce Data**: You manually run the `kafka_producer.py` script. It fetches user data from a public API and streams it into a Kafka topic.
-3.  **Process Data**: You manually run the `spark_stream.py` script. It connects to the Spark cluster and reads from the Kafka topic, processes the data, and writes it to an S3 bucket in Parquet format.
-4.  **Monitor**: You can use the Confluent Control Center UI to monitor the Kafka topics and the Spark UI to monitor the Spark jobs.
+1. **Data Generation**: Fetches random user data from [randomuser.me](https://randomuser.me) API
+2. **Stream Processing**: Produces data to Kafka topic `users_created`
+3. **Data Consumption**: Consumes all data using Spark (preferred) or simple Kafka consumer (fallback)
+4. **Data Storage**: Saves processed data in multiple formats (JSON, CSV, Parquet)
 
-## Tech Stack
+## 🛠️ Prerequisites
 
--   **Real-time Messaging**: Apache Kafka
--   **Data Processing**: Apache Spark
--   **Data Lake**: AWS S3
--   **Containerization**: Docker & Docker Compose
--   **Monitoring**: Confluent Control Center & Spark UI
+### Required Software
+- **Docker & Docker Compose**: For running Kafka and Spark services
+- **Python 3.8+**: For running the pipeline
+- **Git**: For version control
 
-## Getting Started
+### Required Python Packages
+```bash
+pip install pyspark kafka-python requests pandas
+```
 
-Follow these steps to set up and run the project.
+## 🚀 Quick Start
 
-### Prerequisites
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd data-project-1
+```
 
--   [Docker](https://www.docker.com/products/docker-desktop) and Docker Compose
--   An [AWS Account](https://aws.amazon.com/free/) with an S3 bucket
--   A local Python environment (e.g., in WSL).
+### 2. Start Docker Services
+```bash
+docker-compose up -d
+```
 
-### 1. Setup Your Local Python Environment
+Wait for all services to be healthy (check with `docker-compose ps`).
 
-It is highly recommended to use a Python virtual environment to manage your project's dependencies.
+### 3. Run the Pipeline
+```bash
+python realtime_pipeline.py
+```
 
-1.  **Create a virtual environment**:
-    ```bash
-    python3 -m venv venv
-    ```
-2.  **Activate the virtual environment**:
-    ```bash
-    source venv/bin/activate
-    ```
-    _You will need to run this activation command every time you open a new terminal to work on this project._
+### 4. Check Results
+After completion, check the `./output/` directory for generated files:
+- `users_data.json` - Raw JSON data
+- `users_data.csv` - Structured CSV data  
+- `users_spark_data.parquet` - Optimized Parquet format (if Spark worked)
 
-3.  **Install the required libraries**:
-    ```bash
-    pip install pyspark kafka-python requests
-    ```
+## 📋 Detailed Setup
 
-### 2. AWS Setup
+### Docker Services Configuration
 
-1.  **S3 Bucket**: Create a standard S3 bucket.
-2.  **IAM User**: Create an IAM user with programmatic access and attach a policy that grants it read/write access to your S3 bucket.
-3.  **Local Credentials**: Create a `.env` file in the project root and add your AWS credentials:
-    ```
-    AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
-    AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
-    ```
+The `docker-compose.yml` includes:
 
-### 3. Configuration
+| Service | Purpose | Port |
+|---------|---------|------|
+| **Zookeeper** | Kafka coordination | 2181 |
+| **Kafka Broker** | Message streaming | 9092 |
+| **Schema Registry** | Schema management | 8081 |
+| **Control Center** | Kafka UI | 9021 |
+| **Spark Master** | Spark cluster master | 8080, 7077 |
+| **Spark Worker** | Spark execution | - |
 
--   Open `spark_stream.py` and find the line `parquet("s3a://my-amazing-app/users/")`. Replace `my-amazing-app` with your S3 bucket name.
+### Environment Variables (Optional)
 
-### 4. Running the Pipeline
+For S3 integration (advanced usage):
+```bash
+export AWS_ACCESS_KEY_ID="your_access_key"
+export AWS_SECRET_ACCESS_KEY="your_secret_key"
+```
 
-Ensure your virtual environment is activated (`source venv/bin/activate`) before running the following commands.
+## 🔧 Pipeline Configuration
 
-1.  **Start the Services**: Open a terminal and run:
-    ```bash
-    docker-compose up -d --build
-    ```
-2.  **Start the Spark Job**: In a separate terminal, run the Spark consumer. This job will wait for data from Kafka.
-    ```bash
-    python spark_stream.py
-    ```
-3.  **Start the Kafka Producer**: In another terminal, run the Kafka producer to start sending data.
-    ```bash
-    python kafka_producer.py
-    ```
+### Producer Settings
+- **API Source**: https://randomuser.me/api/
+- **Topic**: `users_created`
+- **Duration**: 60 seconds (configurable)
+- **Rate**: ~1 record/second
 
-### 5. Accessing the UIs
+### Consumer Options
+1. **Spark Consumer** (Primary)
+   - Reads all Kafka data in batch mode
+   - Outputs Parquet files
+   - Requires proper network configuration
 
--   **Spark Master UI**: `http://localhost:9090`
--   **Confluent Control Center**: `http://localhost:9021`
+2. **Simple Consumer** (Fallback)
+   - Pure Kafka consumer
+   - Outputs JSON and CSV files
+   - More reliable across different environments
+
+## 📊 Data Schema
+
+Each record contains the following fields:
+
+```json
+{
+  "id": "uuid4-string",
+  "first_name": "string",
+  "last_name": "string", 
+  "gender": "string",
+  "address": "string",
+  "post_code": "string/number",
+  "email": "string",
+  "username": "string",
+  "dob": "ISO-date-string",
+  "registered_date": "ISO-date-string", 
+  "phone": "string",
+  "picture": "url-string"
+}
+```
+
+## 📁 Project Structure
+
+```
+data-project-1/
+├── README.md                 # This documentation
+├── realtime_pipeline.py      # Main pipeline script
+├── docker-compose.yml        # Docker services configuration
+├── dbt_project/             # DBT transformations (optional)
+├── postgres_init/           # Database initialization
+├── output/                  # Generated output files
+│   ├── users_data.json
+│   ├── users_data.csv
+│   └── users_spark_data.parquet
+└── architecture.png         # Architecture diagram
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### 1. Docker Services Not Starting
+```bash
+# Check service status
+docker-compose ps
+
+# View logs
+docker-compose logs [service-name]
+
+# Restart services
+docker-compose down && docker-compose up -d
+```
+
+#### 2. Spark Connection Issues
+- The pipeline automatically falls back to simple consumer if Spark fails
+- Check Docker network connectivity
+- Verify no port conflicts (7077, 8080)
+
+#### 3. Kafka Connection Refused
+```bash
+# Verify Kafka is running
+docker exec broker kafka-topics --bootstrap-server localhost:9092 --list
+
+# Check if topic exists
+docker exec broker kafka-console-consumer --bootstrap-server localhost:9092 --topic users_created --from-beginning --max-messages 1
+```
+
+#### 4. No Data Generated
+- Check internet connectivity (API access)
+- Verify Kafka producer logs
+- Ensure sufficient disk space for output files
+
+### Performance Tuning
+
+#### For Large Data Volumes
+```python
+# Modify in realtime_pipeline.py
+PRODUCER_DURATION = 300  # 5 minutes instead of 60 seconds
+CONSUMER_TIMEOUT = 120   # Increase timeout
+```
+
+#### For Resource Constraints
+```yaml
+# In docker-compose.yml
+environment:
+  - SPARK_WORKER_MEMORY=512m
+  - SPARK_WORKER_CORES=1
+```
+
+## 📈 Monitoring
+
+### Kafka Control Center
+Access the Kafka UI at http://localhost:9021 to monitor:
+- Topic statistics
+- Consumer lag
+- Message throughput
+
+### Spark UI
+Access the Spark UI at http://localhost:8080 to view:
+- Cluster status
+- Job execution
+- Resource utilization
+
+## 🔄 Advanced Usage
+
+### Custom Data Sources
+Replace the `get_data()` function to use different APIs:
+
+```python
+def get_data():
+    # Your custom API call here
+    res = requests.get("your-api-endpoint")
+    return res.json()
+```
+
+### S3 Integration
+Set AWS credentials to enable S3 output:
+
+```python
+# Automatically detected in the pipeline
+selection_df.write.mode("overwrite").parquet("s3a://your-bucket/path/")
+```
+
+### DBT Transformations
+Use the included DBT project for advanced data transformations:
+
+```bash
+cd dbt_project
+dbt run
+```
+
+## 📝 Development
+
+### Running Tests
+```bash
+# Validate Kafka connectivity
+python -c "from kafka import KafkaProducer; print('Kafka OK')"
+
+# Test API connectivity
+python -c "import requests; print(requests.get('https://randomuser.me/api/').status_code)"
+```
+
+### Adding Features
+1. Fork the repository
+2. Create a feature branch
+3. Implement changes in `realtime_pipeline.py`
+4. Test with various scenarios
+5. Update documentation
+6. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read the contributing guidelines and submit pull requests for any improvements.
+
+## 📞 Support
+
+For issues and questions:
+1. Check the troubleshooting section
+2. Review Docker logs
+3. Open an issue on GitHub
+4. Contact the development team
+
+---
+
+**Last Updated**: December 2024  
+**Version**: 2.0.0  
+**Compatibility**: Python 3.8+, Docker 20.10+
