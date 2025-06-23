@@ -266,21 +266,3 @@ python -c "import requests; print(requests.get('https://randomuser.me/api/').sta
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read the contributing guidelines and submit pull requests for any improvements.
-
-## 📞 Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review Docker logs
-3. Open an issue on GitHub
-4. Contact the development team
-
----
-
-**Last Updated**: December 2024  
-**Version**: 2.0.0  
-**Compatibility**: Python 3.8+, Docker 20.10+
