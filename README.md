@@ -1,35 +1,47 @@
-# End-to-End Cloud Data Engineering Project
+# Real-Time Data-Engineering-Project-on-AWS
 
-This project is a complete end-to-end data engineering pipeline designed to showcase modern, cloud-native data technologies and best practices. It's an ideal portfolio project for aspiring data engineers, cloud data architects, and anyone interested in building scalable data platforms.
-
-The pipeline ingests data from a public API, processes it in real-time, stores it in a data lake, and transforms it into a data warehouse for analytics and visualization.
+This project demonstrates a real-time data engineering pipeline using a modern, scalable tech stack. The core idea is to stream data from a public API, process it with Spark, and store it in a data lake on AWS S3.
 
 ## Architecture
 
-The following diagram illustrates the architecture of the data platform.
+The architecture is designed to be simple and robust. Core services like Kafka and Spark run in Docker, while the data producer and consumer scripts are run locally (e.g., in WSL). This provides a flexible development environment.
 
-<img src="architecture.png" alt="architecture" width="400"/>
+```mermaid
+graph TD;
+    subgraph "Local Machine (WSL)"
+        A[Python Script: kafka_producer.py] --> B;
+        C[Spark Job: spark_stream.py] --> D;
+    end
+
+    subgraph "Docker Services"
+        B(Kafka Broker) --> D(Spark Cluster);
+        E(Confluent Control Center) --> B;
+        F(Spark UI) --> D;
+    end
+    
+    subgraph "AWS Cloud"
+        D --> G[S3 Data Lake];
+    end
+
+    A -- "Sends data to" --> B;
+    C -- "Reads data from" --> B;
+    C -- "Submits job to" --> D;
+```
 
 ### Workflow
 
-1.  **Ingest**: An Apache Airflow DAG runs on a schedule to fetch user data from the `randomuser.me` public API.
-2.  **Stream**: The fetched data is published to an Apache Kafka topic.
-3.  **Process & Land**: An Apache Spark Streaming job consumes the data from Kafka in real-time, processes it, and writes it to an AWS S3 data lake in Parquet format.
-4.  **Catalog (Optional but Recommended)**: AWS Glue can be used to crawl the data in S3 and create a data catalog, making it easily queryable.
-5.  **Load & Transform**: Another Airflow DAG orchestrates the process of loading data from S3 into an Amazon Redshift data warehouse. After loading, it triggers a `dbt` run to transform the raw data into clean, analysis-ready models.
-6.  **Visualize**: Apache Superset is connected to the Redshift data warehouse to create interactive dashboards and visualizations.
+1.  **Run Services**: The backing services (Kafka, Zookeeper, Spark, etc.) are started using `docker-compose`.
+2.  **Produce Data**: You manually run the `kafka_producer.py` script. It fetches user data from a public API and streams it into a Kafka topic.
+3.  **Process Data**: You manually run the `spark_stream.py` script. It connects to the Spark cluster and reads from the Kafka topic, processes the data, and writes it to an S3 bucket in Parquet format.
+4.  **Monitor**: You can use the Confluent Control Center UI to monitor the Kafka topics and the Spark UI to monitor the Spark jobs.
 
 ## Tech Stack
 
--   **Orchestration**: Apache Airflow
 -   **Real-time Messaging**: Apache Kafka
 -   **Data Processing**: Apache Spark
 -   **Data Lake**: AWS S3
--   **Data Warehouse**: Amazon Redshift
--   **Data Transformation**: dbt (Data Build Tool)
--   **Data Visualization**: Apache Superset
 -   **Containerization**: Docker & Docker Compose
--   **Metadata Catalog**: AWS Glue (Optional)
+-   **Monitoring**: Confluent Control Center & Spark UI
 
 ## Getting Started
 
@@ -38,68 +50,42 @@ Follow these steps to set up and run the project.
 ### Prerequisites
 
 -   [Docker](https://www.docker.com/products/docker-desktop) and Docker Compose
--   An [AWS Account](https://aws.amazon.com/free/)
+-   An [AWS Account](https://aws.amazon.com/free/) with an S3 bucket
+-   A local Python environment (e.g., in WSL) with the necessary libraries installed:
+    ```bash
+    pip install pyspark kafka-python requests
+    ```
 
 ### 1. AWS Setup
 
-You'll need to create the following resources in your AWS account.
-
-1.  **S3 Bucket**: Create a standard S3 bucket to serve as your data lake.
-2.  **Redshift Cluster**: Provision a new Amazon Redshift cluster. Note down the cluster hostname, database name, username, and password.
-3.  **IAM User**: Create a new IAM user with "Programmatic access". This will provide you with an `AWS_ACCESS_KEY_ID` and an `AWS_SECRET_ACCESS_KEY`. Attach a policy to this user that grants permissions to read/write to your S3 bucket and access your Redshift cluster.
-
-### 2. Local Configuration
-
-1.  **Clone the Repository**:
-    ```bash
-    git clone <your-repo-url>
-    cd <repo-name>
-    ```
-2.  **Configure AWS Credentials**:
-    - Open the `.env` file and replace the placeholder values with the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` of your IAM user.
+1.  **S3 Bucket**: Create a standard S3 bucket.
+2.  **IAM User**: Create an IAM user with programmatic access and attach a policy that grants it read/write access to your S3 bucket.
+3.  **Local Credentials**: Create a `.env` file in the project root and add your AWS credentials:
     ```
     AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
     ```
-    **Note**: The `.env` file is included in `.gitignore` to prevent you from accidentally committing your secrets.
 
-3.  **Configure S3 Bucket in Spark**:
-    - Open `spark_stream.py`.
-    - Find the line `option("path", "s3a://your-s3-bucket/users")` and replace `your-s3-bucket` with the name of your S3 bucket.
+### 2. Configuration
 
-4.  **Configure dbt Connection**:
-    - Open `dbt_profiles/profiles.yml`.
-    - Replace the placeholder values with your Redshift cluster's connection details.
+-   Open `spark_stream.py` and find the line `parquet("s3a://my-amazing-app/users/")`. Replace `my-amazing-app` with your S3 bucket name.
 
-### 3. Running the Project
+### 3. Running the Pipeline
 
-Once you have completed the setup and configuration, you can start all the services using Docker Compose:
-
-```bash
-docker-compose up -d --build
-```
-
-### 4. Accessing the Services
-
--   **Airflow Web UI**: `http://localhost:8080` (user: `admin`, pass: `admin`)
--   **Superset Web UI**: `http://localhost:8088`
--   **Adminer**: `http://localhost:8082` (for browsing the Postgres DB used by Airflow/Superset)
--   **Confluent Control Center**: `http://localhost:9021` (for managing Kafka)
-
-### 5. Initial Superset Setup
-
-To use Superset, you must first create an admin user and initialize its database. Run the following commands in your terminal:
-
-1.  **Create Admin User**:
+1.  **Start the Services**: Open a terminal and run:
     ```bash
-    docker-compose exec superset superset fab create-admin
+    docker-compose up -d --build
     ```
-    Follow the prompts to create your user.
-
-2.  **Initialize the Database**:
+2.  **Start the Spark Job**: In a separate terminal (e.g., in WSL), run the Spark consumer. This job will wait for data from Kafka.
     ```bash
-    docker-compose exec superset superset db upgrade
-    docker-compose exec superset superset init
+    python spark_stream.py
+    ```
+3.  **Start the Kafka Producer**: In another terminal (e.g., in WSL), run the Kafka producer to start sending data.
+    ```bash
+    python kafka_producer.py
     ```
 
-After completing these steps, you can log in to the Superset UI with the credentials you created. 
+### 4. Accessing the UIs
+
+-   **Spark Master UI**: `http://localhost:9090`
+-   **Confluent Control Center**: `http://localhost:9021`

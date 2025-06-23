@@ -9,6 +9,7 @@ def create_spark_connection():
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
+            .master('spark://localhost:7077') \
             .config('spark.jars.packages', 
                     'org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,'
                     'org.apache.hadoop:hadoop-aws:3.3.1,'
@@ -28,7 +29,7 @@ def connect_to_kafka(spark_conn):
     try:
         spark_df = spark_conn.readStream \
             .format('kafka') \
-            .option('kafka.bootstrap.servers', 'broker:29092') \
+            .option('kafka.bootstrap.servers', 'localhost:9092') \
             .option('subscribe', 'users_created') \
             .option('startingOffsets', 'earliest') \
             .option('maxOffsetsPerTrigger', 1000) \
@@ -42,7 +43,7 @@ def connect_to_kafka(spark_conn):
 
 def create_selection_df_from_kafka(spark_df):
     schema = StructType([
-        StructField("title", StringType(), False),
+        StructField("id", StringType(), False),
         StructField("first_name", StringType(), False),
         StructField("last_name", StringType(), False),
         StructField("gender", StringType(), False),
@@ -69,7 +70,7 @@ def process_batch(df, epoch_id):
     """
     num_records = df.count()
     if num_records > 0:
-        records_per_file = 100
+        records_per_file = 10
         # Perform integer ceiling division to determine the number of partitions
         num_partitions = (num_records + records_per_file - 1) // records_per_file
 
@@ -78,7 +79,7 @@ def process_batch(df, epoch_id):
         (df.repartition(num_partitions)
          .write
          .mode("append")
-         .parquet("s3://my-amazing-app/users/"))
+         .parquet("s3a://my-amazing-app/users/"))
 
 
 if __name__ == "__main__":
@@ -96,7 +97,7 @@ if __name__ == "__main__":
                            .foreachBatch(process_batch)
                            .outputMode("update")
                            .option('checkpointLocation', './tmp/checkpoint')
-                           .trigger(processingTime='10 seconds')
+                           .trigger(processingTime='3 seconds')
                            .start())
 
         streaming_query.awaitTermination()

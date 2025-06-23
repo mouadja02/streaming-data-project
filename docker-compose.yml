@@ -104,83 +104,6 @@ services:
       timeout: 10s
       retries: 5
 
-  postgres:
-    image: postgres:14.0
-    container_name: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./postgres_init:/docker-entrypoint-initdb.d
-    environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
-    logging:
-      options:
-        max-size: 10m
-        max-file: "3"
-    networks:
-      - confluent
-
-  adminer:
-    image: adminer
-    container_name: adminer
-    ports:
-      - "8082:8080"
-    networks:
-      - confluent
-
-  
-  webserver:
-    image: apache/airflow:2.6.0-python3.9
-    entrypoint: ["/opt/airflow/script/entrypoint.sh"]
-    command: "webserver"
-    depends_on:
-      - postgres
-    environment:
-      - LOAD_EX=n
-      - EXECUTOR=Sequential
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW_WEBSERVER_SECRET_KEY=this_is_a_very_secured_key
-    logging:
-      options:
-        max-size: 10m
-        max-file: "3"
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
-      - ./requirements.txt:/opt/airflow/requirements.txt
-      - ./dbt_project:/opt/airflow/dbt
-    ports:
-      - "8080:8080"
-    healthcheck:
-      test: ['CMD-SHELL', "[ -f /opt/airflow/airflow-webserver.pid ]"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-    networks:
-      - confluent
-
-  scheduler:
-    image: apache/airflow:2.6.0-python3.9
-    entrypoint: ["/opt/airflow/script/entrypoint.sh"]
-    command: "scheduler"
-    depends_on:
-      webserver:
-        condition: service_healthy
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
-      - ./requirements.txt:/opt/airflow/requirements.txt
-      - ./dbt_project:/opt/airflow/dbt
-    environment:
-      - LOAD_EX=n
-      - EXECUTOR=Sequential
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW_WEBSERVER_SECRET_KEY=this_is_a_very_secured_key
-    networks:
-      - confluent
-
   spark-master:
     image: bitnami/spark:latest
     command: bin/spark-class org.apache.spark.deploy.master.Master
@@ -208,28 +131,5 @@ services:
     networks:
       - confluent
 
-  superset:
-    image: amancevice/superset
-    container_name: superset
-    depends_on:
-      - postgres
-    ports:
-      - "8088:8088"
-    environment:
-      - "SUPERSET_SECRET_KEY=this_is_a_very_secured_key"
-      - "SUPERSET_CONFIG_PATH=/app/superset_config.py"
-    volumes:
-      - ./superset_config.py:/app/superset_config.py
-    networks:
-      - confluent
-
-  dbt:
-    image: ghcr.io/dbt-labs/dbt-redshift:1.5.latest
-    container_name: dbt
-    volumes:
-      - ./dbt_project:/usr/app
-      - ./dbt_profiles:/root/.dbt/
-    networks:
-      - confluent
 networks:
   confluent:
