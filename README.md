@@ -51,12 +51,28 @@ Follow these steps to set up and run the project.
 
 -   [Docker](https://www.docker.com/products/docker-desktop) and Docker Compose
 -   An [AWS Account](https://aws.amazon.com/free/) with an S3 bucket
--   A local Python environment (e.g., in WSL) with the necessary libraries installed:
+-   A local Python environment (e.g., in WSL).
+
+### 1. Setup Your Local Python Environment
+
+It is highly recommended to use a Python virtual environment to manage your project's dependencies.
+
+1.  **Create a virtual environment**:
+    ```bash
+    python3 -m venv venv
+    ```
+2.  **Activate the virtual environment**:
+    ```bash
+    source venv/bin/activate
+    ```
+    _You will need to run this activation command every time you open a new terminal to work on this project._
+
+3.  **Install the required libraries**:
     ```bash
     pip install pyspark kafka-python requests
     ```
 
-### 1. AWS Setup
+### 2. AWS Setup
 
 1.  **S3 Bucket**: Create a standard S3 bucket.
 2.  **IAM User**: Create an IAM user with programmatic access and attach a policy that grants it read/write access to your S3 bucket.
@@ -66,26 +82,28 @@ Follow these steps to set up and run the project.
     AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
     ```
 
-### 2. Configuration
+### 3. Configuration
 
 -   Open `spark_stream.py` and find the line `parquet("s3a://my-amazing-app/users/")`. Replace `my-amazing-app` with your S3 bucket name.
 
-### 3. Running the Pipeline
+### 4. Running the Pipeline
+
+Ensure your virtual environment is activated (`source venv/bin/activate`) before running the following commands.
 
 1.  **Start the Services**: Open a terminal and run:
     ```bash
     docker-compose up -d --build
     ```
-2.  **Start the Spark Job**: In a separate terminal (e.g., in WSL), run the Spark consumer. This job will wait for data from Kafka.
+2.  **Start the Spark Job**: In a separate terminal, run the Spark consumer. This job will wait for data from Kafka.
     ```bash
     python spark_stream.py
     ```
-3.  **Start the Kafka Producer**: In another terminal (e.g., in WSL), run the Kafka producer to start sending data.
+3.  **Start the Kafka Producer**: In another terminal, run the Kafka producer to start sending data.
     ```bash
     python kafka_producer.py
     ```
 
-### 4. Accessing the UIs
+### 5. Accessing the UIs
 
 -   **Spark Master UI**: `http://localhost:9090`
 -   **Confluent Control Center**: `http://localhost:9021`
