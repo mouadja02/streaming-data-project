@@ -6,33 +6,8 @@ The pipeline ingests data from a public API, processes it in real-time, stores i
 
 ## Architecture
 
-The following diagram illustrates the architecture of the data platform. If you have an `architecture.png` file, you can replace the diagram below by using the following markdown: `![Architecture Diagram](architecture.png)`
+The following diagram illustrates the architecture of the data platform. If you have an `architecture.png` file, you can replace the diagram below by using the following markdown: [Architecture Diagram](architecture.png)
 
-```mermaid
-graph TD;
-    A[Public API] --> B[Airflow];
-    B --> C[Kafka];
-    C --> D[Spark Streaming];
-    D --> E[AWS S3 Data Lake];
-    E --> F[AWS Glue Catalog];
-    F --> G[dbt];
-    G --> H[Amazon Redshift Data Warehouse];
-    H --> I[Apache Superset];
-    B --> G;
-    subgraph "AWS Cloud"
-        E[AWS S3 Data Lake]
-        F[AWS Glue Catalog]
-        H[Amazon Redshift]
-    end
-
-    subgraph "Local Docker Environment"
-        B[Apache Airflow]
-        C[Apache Kafka]
-        D[Apache Spark]
-        I[Apache Superset]
-        G[dbt]
-    end
-```
 
 ### Workflow
 
