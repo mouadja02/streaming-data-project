@@ -6,7 +6,8 @@ The pipeline ingests data from a public API, processes it in real-time, stores i
 
 ## Architecture
 
-The following diagram illustrates the architecture of the data platform. If you have an `architecture.png` file, you can replace the diagram below by using the following markdown: 
+The following diagram illustrates the architecture of the data platform.
+
 <img src="architecture.png" alt="architecture" width="400"/>
 
 ### Workflow
