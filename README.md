@@ -193,6 +193,49 @@ python snowflake_connector.py query
 
 **Full Documentation**: See `snowflake/README.md` for detailed setup and usage instructions.
 
+## Automated CI/CD Deployment
+
+This project includes a complete CI/CD pipeline that automatically deploys your infrastructure when you push changes to GitHub.
+
+### What Gets Deployed Automatically
+- **Snowflake External Tables**: Automatically configured to read from your S3 bucket
+- **AWS Glue Jobs**: Three advanced transformation jobs with Iceberg table support
+- **IAM Roles and Permissions**: Proper security configuration for all services
+- **Glue Database and Workflow**: Complete orchestration setup
+
+### Quick Setup
+1. **Validate your configuration**:
+   ```bash
+   python scripts/validate_setup.py
+   ```
+
+2. **Configure GitHub secrets** in your repository:
+   - Go to Settings → Secrets and variables → Actions
+   - Add AWS and Snowflake credentials (see [CI/CD Setup Guide](docs/CICD_SETUP.md))
+
+3. **Deploy automatically**:
+   ```bash
+   git add .
+   git commit -m "deploy: trigger automated infrastructure deployment"
+   git push origin main
+   ```
+
+4. **Monitor deployment** in GitHub Actions and run jobs in AWS Console
+
+### AWS Glue Jobs Created
+- **data-pipeline-raw-transformation**: Data validation, cleansing, and enrichment
+- **data-pipeline-analytics-aggregation**: Dimensional analytics and aggregations  
+- **data-pipeline-time-series-analysis**: Trend detection and time series analysis
+
+### Benefits
+- **Zero Manual Setup**: Everything deploys automatically
+- **Version Control**: Infrastructure changes tracked in Git
+- **Rollback Capability**: Easy to revert problematic deployments
+- **Monitoring**: Complete logging and error tracking
+- **Scalability**: Production-ready configuration
+
+**Complete Documentation**: See [CI/CD Setup Guide](docs/CICD_SETUP.md) for detailed configuration instructions.
+
 ## Project Structure
 
 ```
@@ -201,6 +244,18 @@ data-project-1/
 ├── realtime_pipeline.py      # Main pipeline script
 ├── snowflake_connector.py    # Snowflake integration
 ├── docker-compose.yml        # Docker services configuration
+├── requirements.txt          # Python dependencies
+├── .github/workflows/        # CI/CD automation
+│   └── deploy-pipeline.yml   # GitHub Actions workflow
+├── docs/                     # Documentation
+│   └── CICD_SETUP.md        # CI/CD setup guide
+├── scripts/                  # Utility scripts
+│   └── validate_setup.py    # Pre-deployment validation
+├── glue_jobs/               # AWS Glue ETL jobs
+│   ├── 01_raw_data_transformation.py
+│   ├── 02_analytics_aggregation.py
+│   ├── 03_time_series_analysis.py
+│   └── glue_job_config.py   # Deployment configuration
 ├── snowflake/               # Snowflake SQL scripts and docs
 │   ├── README.md
 │   ├── 01_setup_stages.sql
@@ -209,8 +264,7 @@ data-project-1/
 │   └── 04_sample_queries.sql
 ├── dbt_project/             # DBT transformations (optional)
 ├── postgres_init/           # Database initialization
-├── output/                  # Generated output files
-
+└── output/                  # Generated output files
 ```
 
 ##  Troubleshooting

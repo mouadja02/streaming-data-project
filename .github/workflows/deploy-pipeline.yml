@@ -1,0 +1,376 @@
+name: Deploy Data Pipeline Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'glue_jobs/**'
+      - 'snowflake/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'glue_jobs/**'
+      - 'snowflake/**'
+
+env:
+  AWS_REGION: us-east-1
+  GLUE_ROLE_NAME: DataPipelineGlueRole
+  GLUE_DATABASE_NAME: data_pipeline_db
+  S3_SCRIPTS_PREFIX: glue-scripts/
+
+jobs:
+  deploy-snowflake:
+    name: 🏔️ Deploy Snowflake Infrastructure
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install dependencies
+      run: |
+        pip install snowflake-connector-python==3.7.0 python-dotenv
+        
+    - name: 🏔️ Deploy Snowflake tables
+      env:
+        SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+        SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+        SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+        SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+        SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        echo "🚀 Setting up Snowflake external tables..."
+        python snowflake_connector.py
+        
+    - name: ✅ Snowflake deployment summary
+      run: |
+        echo "✅ Snowflake infrastructure deployed successfully!"
+        echo "📊 External tables created for S3 data"
+        echo "🔗 Ready for analytics queries"
+
+  deploy-aws-glue:
+    name: ⚡ Deploy AWS Glue Jobs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: deploy-snowflake
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install AWS CLI and dependencies
+      run: |
+        pip install boto3 awscli
+        
+    - name: 🗄️ Create Glue Database
+      run: |
+        echo "🗄️ Creating Glue catalog database..."
+        aws glue create-database \
+          --database-input Name=${{ env.GLUE_DATABASE_NAME }},Description="Database for data pipeline Iceberg tables" \
+          --region ${{ env.AWS_REGION }} || echo "Database already exists"
+        
+    - name: 🔐 Create/Update IAM Role for Glue
+      run: |
+        echo "🔐 Setting up IAM role for Glue jobs..."
+        
+        # Create trust policy
+        cat > trust-policy.json << EOF
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "glue.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+        EOF
+        
+        # Create role (ignore error if exists)
+        aws iam create-role \
+          --role-name ${{ env.GLUE_ROLE_NAME }} \
+          --assume-role-policy-document file://trust-policy.json \
+          --description "IAM role for Data Pipeline Glue jobs" || echo "Role already exists"
+        
+        # Attach managed policies
+        aws iam attach-role-policy \
+          --role-name ${{ env.GLUE_ROLE_NAME }} \
+          --policy-arn arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole || true
+        
+        aws iam attach-role-policy \
+          --role-name ${{ env.GLUE_ROLE_NAME }} \
+          --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess || true
+        
+        aws iam attach-role-policy \
+          --role-name ${{ env.GLUE_ROLE_NAME }} \
+          --policy-arn arn:aws:iam::aws:policy/CloudWatchLogsFullAccess || true
+        
+        # Create custom policy for Iceberg
+        cat > iceberg-policy.json << EOF
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "glue:*",
+                "lakeformation:GetDataAccess",
+                "lakeformation:GrantPermissions",
+                "lakeformation:BatchGrantPermissions",
+                "lakeformation:RevokePermissions",
+                "lakeformation:BatchRevokePermissions",
+                "lakeformation:ListPermissions"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+        EOF
+        
+        aws iam put-role-policy \
+          --role-name ${{ env.GLUE_ROLE_NAME }} \
+          --policy-name IcebergCustomPolicy \
+          --policy-document file://iceberg-policy.json || true
+        
+    - name: 📤 Upload Glue job scripts to S3
+      run: |
+        echo "📤 Uploading Glue job scripts to S3..."
+        
+        # Upload all Glue job scripts
+        aws s3 cp glue_jobs/01_raw_data_transformation.py \
+          s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}01_raw_data_transformation.py
+        
+        aws s3 cp glue_jobs/02_analytics_aggregation.py \
+          s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}02_analytics_aggregation.py
+        
+        aws s3 cp glue_jobs/03_time_series_analysis.py \
+          s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}03_time_series_analysis.py
+        
+        echo "✅ All scripts uploaded successfully!"
+        
+    - name: ⚡ Create/Update Glue Jobs
+      run: |
+        echo "⚡ Creating/updating Glue jobs..."
+        
+        # Get the role ARN
+        ROLE_ARN=$(aws iam get-role --role-name ${{ env.GLUE_ROLE_NAME }} --query 'Role.Arn' --output text)
+        echo "Using role: $ROLE_ARN"
+        
+        # Job 1: Raw Data Transformation
+        cat > job1-config.json << EOF
+        {
+          "Name": "data-pipeline-raw-transformation",
+          "Description": "Transform raw user data with validation and enrichment",
+          "Role": "$ROLE_ARN",
+          "Command": {
+            "Name": "glueetl",
+            "ScriptLocation": "s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}01_raw_data_transformation.py",
+            "PythonVersion": "3"
+          },
+          "DefaultArguments": {
+            "--job-language": "python",
+            "--job-bookmark-option": "job-bookmark-enable",
+            "--enable-metrics": "true",
+            "--enable-continuous-cloudwatch-log": "true",
+            "--enable-spark-ui": "true",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET }}/iceberg-warehouse",
+            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            "--datalake-formats": "iceberg"
+          },
+          "MaxRetries": 2,
+          "Timeout": 2880,
+          "GlueVersion": "4.0",
+          "NumberOfWorkers": 5,
+          "WorkerType": "G.1X",
+          "Tags": {
+            "Environment": "production",
+            "Project": "data-pipeline",
+            "JobType": "transformation"
+          }
+        }
+        EOF
+        
+        # Create or update job 1
+        if aws glue get-job --job-name data-pipeline-raw-transformation >/dev/null 2>&1; then
+          echo "Updating existing job: data-pipeline-raw-transformation"
+          aws glue update-job --job-name data-pipeline-raw-transformation --job-update file://job1-config.json
+        else
+          echo "Creating new job: data-pipeline-raw-transformation"
+          aws glue create-job --cli-input-json file://job1-config.json
+        fi
+        
+        # Job 2: Analytics Aggregation
+        cat > job2-config.json << EOF
+        {
+          "Name": "data-pipeline-analytics-aggregation",
+          "Description": "Create analytics aggregations and dimensional tables",
+          "Role": "$ROLE_ARN",
+          "Command": {
+            "Name": "glueetl",
+            "ScriptLocation": "s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}02_analytics_aggregation.py",
+            "PythonVersion": "3"
+          },
+          "DefaultArguments": {
+            "--job-language": "python",
+            "--job-bookmark-option": "job-bookmark-enable",
+            "--enable-metrics": "true",
+            "--enable-continuous-cloudwatch-log": "true",
+            "--enable-spark-ui": "true",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET }}/iceberg-warehouse",
+            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            "--datalake-formats": "iceberg"
+          },
+          "MaxRetries": 2,
+          "Timeout": 2880,
+          "GlueVersion": "4.0",
+          "NumberOfWorkers": 3,
+          "WorkerType": "G.1X",
+          "Tags": {
+            "Environment": "production",
+            "Project": "data-pipeline",
+            "JobType": "analytics"
+          }
+        }
+        EOF
+        
+        # Create or update job 2
+        if aws glue get-job --job-name data-pipeline-analytics-aggregation >/dev/null 2>&1; then
+          echo "Updating existing job: data-pipeline-analytics-aggregation"
+          aws glue update-job --job-name data-pipeline-analytics-aggregation --job-update file://job2-config.json
+        else
+          echo "Creating new job: data-pipeline-analytics-aggregation"
+          aws glue create-job --cli-input-json file://job2-config.json
+        fi
+        
+        # Job 3: Time Series Analysis
+        cat > job3-config.json << EOF
+        {
+          "Name": "data-pipeline-time-series-analysis",
+          "Description": "Perform time series analysis and trend detection",
+          "Role": "$ROLE_ARN",
+          "Command": {
+            "Name": "glueetl",
+            "ScriptLocation": "s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}03_time_series_analysis.py",
+            "PythonVersion": "3"
+          },
+          "DefaultArguments": {
+            "--job-language": "python",
+            "--job-bookmark-option": "job-bookmark-enable",
+            "--enable-metrics": "true",
+            "--enable-continuous-cloudwatch-log": "true",
+            "--enable-spark-ui": "true",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET }}/iceberg-warehouse",
+            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            "--datalake-formats": "iceberg"
+          },
+          "MaxRetries": 2,
+          "Timeout": 2880,
+          "GlueVersion": "4.0",
+          "NumberOfWorkers": 3,
+          "WorkerType": "G.1X",
+          "Tags": {
+            "Environment": "production",
+            "Project": "data-pipeline",
+            "JobType": "analysis"
+          }
+        }
+        EOF
+        
+        # Create or update job 3
+        if aws glue get-job --job-name data-pipeline-time-series-analysis >/dev/null 2>&1; then
+          echo "Updating existing job: data-pipeline-time-series-analysis"
+          aws glue update-job --job-name data-pipeline-time-series-analysis --job-update file://job3-config.json
+        else
+          echo "Creating new job: data-pipeline-time-series-analysis"
+          aws glue create-job --cli-input-json file://job3-config.json
+        fi
+        
+        echo "✅ All Glue jobs created/updated successfully!"
+        
+    - name: 🔄 Create Glue Workflow (Optional)
+      run: |
+        echo "🔄 Creating Glue workflow for job orchestration..."
+        
+        # Create workflow
+        aws glue create-workflow \
+          --name data-pipeline-workflow \
+          --description "Data pipeline workflow for sequential job execution" \
+          --tags Environment=production,Project=data-pipeline || echo "Workflow already exists"
+        
+        echo "✅ Workflow setup completed!"
+        
+    - name: ✅ AWS Glue deployment summary
+      run: |
+        echo "✅ AWS Glue infrastructure deployed successfully!"
+        echo "⚡ Glue jobs are ready to run in AWS Console"
+        echo "🗄️ Database: ${{ env.GLUE_DATABASE_NAME }}"
+        echo "📋 Jobs created:"
+        echo "  1. data-pipeline-raw-transformation"
+        echo "  2. data-pipeline-analytics-aggregation" 
+        echo "  3. data-pipeline-time-series-analysis"
+        echo ""
+        echo "🎯 Next steps:"
+        echo "  1. Go to AWS Glue Console"
+        echo "  2. Run jobs individually or use workflow"
+        echo "  3. Monitor execution in CloudWatch"
+        echo "  4. Query Iceberg tables in Athena"
+        echo "  5. Analyze data in Snowflake"
+
+  notify-completion:
+    name: 📢 Notify Deployment Completion
+    runs-on: ubuntu-latest
+    needs: [deploy-snowflake, deploy-aws-glue]
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 🎉 Deployment Summary
+      run: |
+        echo "🎉 PIPELINE DEPLOYMENT COMPLETED!"
+        echo "================================="
+        echo ""
+        echo "✅ Snowflake Infrastructure: ${{ needs.deploy-snowflake.result }}"
+        echo "✅ AWS Glue Jobs: ${{ needs.deploy-aws-glue.result }}"
+        echo ""
+        echo "🔗 Access Points:"
+        echo "  • AWS Glue Console: https://console.aws.amazon.com/glue/"
+        echo "  • Snowflake Console: https://app.snowflake.com/"
+        echo "  • CloudWatch Logs: https://console.aws.amazon.com/cloudwatch/"
+        echo ""
+        echo "🚀 Ready to process data!" 
