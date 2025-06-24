@@ -5,33 +5,66 @@ A sequential data pipeline that fetches user data from an external API, streams 
 ## 🏗️ Architecture
 
 ```mermaid
-graph TD;
-    subgraph "Local Machine (WSL)"
-        A[Python Script: kafka_producer.py] --> B;
-        C[Spark Job: spark_stream.py] --> D;
+graph TD
+    subgraph "Data Sources"
+        A[RandomUser.me API<br/>External API] 
     end
-
+    
+    subgraph "Local Pipeline (Python)"
+        B[Kafka Producer<br/>realtime_pipeline.py]
+        C[Sequential Processing<br/>60s → Wait → Process]
+    end
+    
     subgraph "Docker Services"
-        B(Kafka Broker) --> D(Spark Cluster);
-        E(Confluent Control Center) --> B;
-        F(Spark UI) --> D;
+        D[Apache Kafka<br/>Message Broker]
+        E[Apache Spark<br/>Data Processing]
+        F[Kafka Control Center<br/>Monitoring UI]
+        G[Spark UI<br/>Job Monitoring]
     end
     
     subgraph "AWS Cloud"
-        D --> G[S3 Data Lake];
+        H[Amazon S3<br/>Data Lake Storage]
+        I[S3 Folders:<br/>• raw/parquet/<br/>• analytics/parquet/<br/>• demographics/parquet/]
+    end
+    
+    subgraph "Analytics & Visualization"
+        J[Snowflake<br/>External Tables]
+        K[Analytics Queries<br/>• Gender Distribution<br/>• Geographic Analysis<br/>• Email Domains<br/>• Data Quality Checks]
+    end
+    
+    subgraph "Local Fallback"
+        L[Local Files<br/>• JSON<br/>• CSV<br/>• Parquet]
     end
 
-    A -- "Sends data to" --> B;
-    C -- "Reads data from" --> B;
-    C -- "Submits job to" --> D;
+    A -->|"Fetch User Data<br/>(~1 record/sec)"| B
+    B -->|"Produce Messages<br/>Topic: users_created"| D
+    D -->|"Sequential Consumer<br/>Batch Processing"| E
+    E -->|"S3A Protocol<br/>Parquet Files"| H
+    H --> I
+    I -->|"External Stages<br/>Auto-refresh"| J
+    J --> K
+    E -->|"Fallback Option<br/>Local Storage"| L
+    
+    D -.-> F
+    E -.-> G
+    
+    style A fill:#e1f5fe
+    style D fill:#fff3e0
+    style E fill:#f3e5f5
+    style H fill:#e8f5e8
+    style J fill:#e3f2fd
+    style L fill:#fce4ec
 ```
 
 ### Pipeline Flow
 
-1. **Data Generation**: Fetches random user data from [randomuser.me](https://randomuser.me) API
-2. **Stream Processing**: Produces data to Kafka topic `users_created`
-3. **Data Consumption**: Consumes all data using Spark (preferred) or simple Kafka consumer (fallback)
-4. **Data Storage**: Saves processed data in multiple formats (JSON, CSV, Parquet)
+1. **Data Ingestion**: Fetches random user data from [randomuser.me](https://randomuser.me) API
+2. **Message Streaming**: Produces data to Kafka topic `users_created` for 60 seconds
+3. **Sequential Processing**: After producer completes, Spark consumer processes all messages in batch mode
+4. **Data Transformation**: Spark creates structured analytics and demographics from raw data
+5. **Cloud Storage**: Saves processed data to S3 in optimized Parquet format with organized folder structure
+6. **Analytics Layer**: Snowflake external tables automatically read S3 data for real-time analytics
+7. **Fallback Storage**: Local files (JSON/CSV/Parquet) for offline analysis and debugging
 
 ## 🛠️ Prerequisites
 
@@ -42,8 +75,13 @@ graph TD;
 
 ### Required Python Packages
 ```bash
-pip install pyspark kafka-python requests pandas
+pip install -r requirements.txt
 ```
+
+### Optional AWS Setup
+For S3 data storage and analytics:
+- **AWS Account** with S3 access
+- **AWS CLI** configured or environment variables set
 
 ## 🚀 Quick Start
 
@@ -65,11 +103,21 @@ Wait for all services to be healthy (check with `docker-compose ps`).
 python realtime_pipeline.py
 ```
 
+The pipeline runs sequentially:
+1. **Producer Phase** (60 seconds): Fetches and streams user data to Kafka
+2. **Wait Phase** (10 seconds): Allows Kafka to settle
+3. **Consumer Phase** (2 minutes max): Processes all data and saves to files
+
 ### 4. Check Results
 After completion, check the `./output/` directory for generated files:
-- `users_data.json` - Raw JSON data
-- `users_data.csv` - Structured CSV data  
-- `users_spark_data.parquet` - Optimized Parquet format (if Spark worked)
+- `users_data.json` - Raw JSON data from fallback consumer
+- `users_data.csv` - Structured CSV data for spreadsheet analysis
+- `users_spark_data.parquet/` - Optimized Parquet format from Spark processing
+
+**S3 Output** (if configured):
+- `s3://your-bucket/users/raw/parquet/` - Raw user data
+- `s3://your-bucket/users/analytics/parquet/` - Gender, email domain analytics  
+- `s3://your-bucket/users/demographics/parquet/` - Geographic demographics
 
 ## 📋 Detailed Setup
 
@@ -86,32 +134,53 @@ The `docker-compose.yml` includes:
 | **Spark Master** | Spark cluster master | 8080, 7077 |
 | **Spark Worker** | Spark execution | - |
 
-### Environment Variables (Optional)
+### S3 Configuration (Optional)
 
-For S3 integration (advanced usage):
+The pipeline automatically uploads data to S3 if configured. Create a `.env` file (copy from `env.example`):
+
 ```bash
-export AWS_ACCESS_KEY_ID="your_access_key"
-export AWS_SECRET_ACCESS_KEY="your_secret_key"
+# Copy the example file
+cp env.example .env
+
+# Edit with your AWS credentials
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
+S3_BUCKET_NAME=your-bucket-name-here
+AWS_REGION=us-east-1
 ```
+
+**S3 Folder Structure:**
+- `users/raw/parquet/` - Raw user data in Parquet format
+- `users/analytics/parquet/` - User analytics (gender distribution, email domains)
+- `users/demographics/parquet/` - Geographic demographics (countries, states)
 
 ## 🔧 Pipeline Configuration
 
-### Producer Settings
+### Sequential Processing Flow
+The pipeline operates in three distinct phases:
+
+#### Phase 1: Data Production (60 seconds)
 - **API Source**: https://randomuser.me/api/
-- **Topic**: `users_created`
-- **Duration**: 60 seconds (configurable)
+- **Target Topic**: `users_created`
 - **Rate**: ~1 record/second
+- **Total Records**: ~50-60 user records
 
-### Consumer Options
-1. **Spark Consumer** (Primary)
-   - Reads all Kafka data in batch mode
-   - Outputs Parquet files
-   - Requires proper network configuration
+#### Phase 2: Kafka Settlement (10 seconds)
+- Allows Kafka to complete message commits
+- Ensures all data is available for consumption
 
-2. **Simple Consumer** (Fallback)
-   - Pure Kafka consumer
-   - Outputs JSON and CSV files
-   - More reliable across different environments
+#### Phase 3: Data Consumption (120 seconds max)
+**Primary: Spark Consumer**
+- Batch processing of all Kafka messages
+- Creates structured analytics and demographics
+- Outputs to S3 (if configured) and local Parquet files
+- Includes data transformations and aggregations
+
+**Fallback: Simple Kafka Consumer**
+- Activates if Spark consumer fails
+- Pure Python kafka-python implementation
+- Outputs JSON and CSV files locally
+- Ensures data is never lost
 
 ## 📊 Data Schema
 
@@ -134,20 +203,62 @@ Each record contains the following fields:
 }
 ```
 
+## 🏔️ Snowflake Integration
+
+Connect your pipeline data to Snowflake for advanced analytics and visualization.
+
+### Quick Setup
+```bash
+# Add Snowflake credentials to .env
+SNOWFLAKE_USER=INTERNPROJECT
+SNOWFLAKE_PASSWORD=your_password
+SNOWFLAKE_ACCOUNT=your_account-INTERNPROJECT
+SNOWFLAKE_WAREHOUSE=INT_WH
+SNOWFLAKE_DATABASE=ECOMMERCE_DATABASE
+SNOWFLAKE_SCHEMA=STAGING
+
+# Install Snowflake connector
+pip install snowflake-connector-python==3.7.0
+
+# Set up external tables automatically
+python snowflake_connector.py
+
+# Run sample analytics queries
+python snowflake_connector.py query
+```
+
+### Features
+- **External Tables**: Automatically read Parquet files from S3
+- **Real-time Analytics**: Gender distribution, geographic analysis, email domains
+- **Data Quality Monitoring**: Automated data validation and pipeline health checks
+- **Sample Queries**: Pre-built analytics for common use cases
+
+### SQL Scripts
+- `snowflake/01_setup_stages.sql` - Create S3 external stages
+- `snowflake/02_create_file_formats.sql` - Define Parquet file formats
+- `snowflake/03_create_external_tables.sql` - Create external tables
+- `snowflake/04_sample_queries.sql` - Analytics and monitoring queries
+
+**📖 Full Documentation**: See `snowflake/README.md` for detailed setup and usage instructions.
+
 ## 📁 Project Structure
 
 ```
 data-project-1/
 ├── README.md                 # This documentation
 ├── realtime_pipeline.py      # Main pipeline script
+├── snowflake_connector.py    # Snowflake integration
 ├── docker-compose.yml        # Docker services configuration
+├── snowflake/               # Snowflake SQL scripts and docs
+│   ├── README.md
+│   ├── 01_setup_stages.sql
+│   ├── 02_create_file_formats.sql
+│   ├── 03_create_external_tables.sql
+│   └── 04_sample_queries.sql
 ├── dbt_project/             # DBT transformations (optional)
 ├── postgres_init/           # Database initialization
 ├── output/                  # Generated output files
-│   ├── users_data.json
-│   ├── users_data.csv
-│   └── users_spark_data.parquet
-└── architecture.png         # Architecture diagram
+
 ```
 
 ## 🐛 Troubleshooting
