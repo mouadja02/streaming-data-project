@@ -1,3 +1,4 @@
 .env
 pyvenv.cfg
 venv
+output\users_spark_data.parquet
