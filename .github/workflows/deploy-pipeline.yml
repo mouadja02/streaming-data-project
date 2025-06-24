@@ -219,6 +219,8 @@ jobs:
         }
         EOF
         
+        aws glue delete-job --job-name data-pipeline-raw-transformation || true
+
         # Create or update job 1
         if aws glue get-job --job-name data-pipeline-raw-transformation >/dev/null 2>&1; then
           echo "Updating existing job: data-pipeline-raw-transformation"
