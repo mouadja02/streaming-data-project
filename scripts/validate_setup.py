@@ -14,6 +14,10 @@ import boto3
 import json
 from pathlib import Path
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def check_file_exists(file_path: str) -> bool:
     """Check if a file exists"""
@@ -59,10 +63,10 @@ def check_aws_connectivity() -> Dict[str, Any]:
     try:
         # Test S3 access
         s3_client = boto3.client('s3')
-        bucket_name = os.getenv('S3_BUCKET')
+        bucket_name = os.getenv('S3_BUCKET_NAME')
         
         if not bucket_name:
-            return {'error': 'S3_BUCKET environment variable not set'}
+            return {'error': 'S3_BUCKET_NAME environment variable not set'}
         
         # Check if bucket exists and is accessible
         try:
@@ -195,7 +199,7 @@ def generate_github_secrets_template() -> str:
 # AWS Credentials
 AWS_ACCESS_KEY_ID=your_aws_access_key_here
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
-S3_BUCKET=your-s3-bucket-name
+S3_BUCKET_NAME=your-s3-bucket-name
 
 # Snowflake Credentials  
 SNOWFLAKE_USER=INTERNPROJECT
