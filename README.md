@@ -2,59 +2,10 @@
 
 A sequential data pipeline that fetches user data from an external API, streams it through Apache Kafka, and processes it with either Apache Spark or a simple Kafka consumer, outputting structured data files.
 
-## 🏗️ Architecture
+## Architecture
+The current architecture of the project is as described below
+<img src="architecture.png" alt="architecture" width="400"/>
 
-```mermaid
-graph TD
-    subgraph "Data Sources"
-        A[RandomUser.me API<br/>External API] 
-    end
-    
-    subgraph "Local Pipeline (Python)"
-        B[Kafka Producer<br/>realtime_pipeline.py]
-        C[Sequential Processing<br/>60s → Wait → Process]
-    end
-    
-    subgraph "Docker Services"
-        D[Apache Kafka<br/>Message Broker]
-        E[Apache Spark<br/>Data Processing]
-        F[Kafka Control Center<br/>Monitoring UI]
-        G[Spark UI<br/>Job Monitoring]
-    end
-    
-    subgraph "AWS Cloud"
-        H[Amazon S3<br/>Data Lake Storage]
-        I[S3 Folders:<br/>• raw/parquet/<br/>• analytics/parquet/<br/>• demographics/parquet/]
-    end
-    
-    subgraph "Analytics & Visualization"
-        J[Snowflake<br/>External Tables]
-        K[Analytics Queries<br/>• Gender Distribution<br/>• Geographic Analysis<br/>• Email Domains<br/>• Data Quality Checks]
-    end
-    
-    subgraph "Local Fallback"
-        L[Local Files<br/>• JSON<br/>• CSV<br/>• Parquet]
-    end
-
-    A -->|"Fetch User Data<br/>(~1 record/sec)"| B
-    B -->|"Produce Messages<br/>Topic: users_created"| D
-    D -->|"Sequential Consumer<br/>Batch Processing"| E
-    E -->|"S3A Protocol<br/>Parquet Files"| H
-    H --> I
-    I -->|"External Stages<br/>Auto-refresh"| J
-    J --> K
-    E -->|"Fallback Option<br/>Local Storage"| L
-    
-    D -.-> F
-    E -.-> G
-    
-    style A fill:#e1f5fe
-    style D fill:#fff3e0
-    style E fill:#f3e5f5
-    style H fill:#e8f5e8
-    style J fill:#e3f2fd
-    style L fill:#fce4ec
-```
 
 ### Pipeline Flow
 
@@ -66,7 +17,7 @@ graph TD
 6. **Analytics Layer**: Snowflake external tables automatically read S3 data for real-time analytics
 7. **Fallback Storage**: Local files (JSON/CSV/Parquet) for offline analysis and debugging
 
-## 🛠️ Prerequisites
+## Prerequisites
 
 ### Required Software
 - **Docker & Docker Compose**: For running Kafka and Spark services
@@ -83,7 +34,7 @@ For S3 data storage and analytics:
 - **AWS Account** with S3 access
 - **AWS CLI** configured or environment variables set
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 ```bash
@@ -119,7 +70,7 @@ After completion, check the `./output/` directory for generated files:
 - `s3://your-bucket/users/analytics/parquet/` - Gender, email domain analytics  
 - `s3://your-bucket/users/demographics/parquet/` - Geographic demographics
 
-## 📋 Detailed Setup
+## Detailed Setup
 
 ### Docker Services Configuration
 
@@ -154,7 +105,7 @@ AWS_REGION=us-east-1
 - `users/analytics/parquet/` - User analytics (gender distribution, email domains)
 - `users/demographics/parquet/` - Geographic demographics (countries, states)
 
-## 🔧 Pipeline Configuration
+##  Pipeline Configuration
 
 ### Sequential Processing Flow
 The pipeline operates in three distinct phases:
@@ -182,7 +133,7 @@ The pipeline operates in three distinct phases:
 - Outputs JSON and CSV files locally
 - Ensures data is never lost
 
-## 📊 Data Schema
+## Data Schema
 
 Each record contains the following fields:
 
@@ -203,7 +154,7 @@ Each record contains the following fields:
 }
 ```
 
-## 🏔️ Snowflake Integration
+## Snowflake Integration
 
 Connect your pipeline data to Snowflake for advanced analytics and visualization.
 
@@ -239,9 +190,9 @@ python snowflake_connector.py query
 - `snowflake/03_create_external_tables.sql` - Create external tables
 - `snowflake/04_sample_queries.sql` - Analytics and monitoring queries
 
-**📖 Full Documentation**: See `snowflake/README.md` for detailed setup and usage instructions.
+**Full Documentation**: See `snowflake/README.md` for detailed setup and usage instructions.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 data-project-1/
@@ -261,7 +212,7 @@ data-project-1/
 
 ```
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -313,7 +264,7 @@ environment:
   - SPARK_WORKER_CORES=1
 ```
 
-## 📈 Monitoring
+## Monitoring
 
 ### Kafka Control Center
 Access the Kafka UI at http://localhost:9021 to monitor:
@@ -327,7 +278,7 @@ Access the Spark UI at http://localhost:8080 to view:
 - Job execution
 - Resource utilization
 
-## 🔄 Advanced Usage
+## Advanced Usage
 
 ### Custom Data Sources
 Replace the `get_data()` function to use different APIs:
@@ -355,7 +306,7 @@ cd dbt_project
 dbt run
 ```
 
-## 📝 Development
+## Development
 
 ### Running Tests
 ```bash
@@ -374,6 +325,6 @@ python -c "import requests; print(requests.get('https://randomuser.me/api/').sta
 5. Update documentation
 6. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

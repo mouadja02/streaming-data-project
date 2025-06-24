@@ -1,8 +1,8 @@
-# 🏔️ Snowflake Integration for Data Pipeline
+# Snowflake Integration for Data Pipeline
 
 This directory contains SQL scripts and Python utilities to connect your real-time data pipeline to Snowflake for advanced analytics and visualization.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
@@ -12,7 +12,7 @@ This directory contains SQL scripts and Python utilities to connect your real-ti
 - [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
 
-## 🎯 Overview
+## Overview
 
 The Snowflake integration provides:
 - **External Tables** that automatically read Parquet files from S3
@@ -25,7 +25,7 @@ The Snowflake integration provides:
 Kafka → Spark → S3 (Parquet) → Snowflake External Tables → Analytics
 ```
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### 1. Snowflake Account
 - Active Snowflake account with appropriate permissions
@@ -42,7 +42,7 @@ Kafka → Spark → S3 (Parquet) → Snowflake External Tables → Analytics
 pip install snowflake-connector-python==3.7.0
 ```
 
-## 🚀 Setup Instructions
+## Setup Instructions
 
 ### Step 1: Configure Environment Variables
 
@@ -82,7 +82,7 @@ python snowflake_connector.py
 python snowflake_connector.py query
 ```
 
-## 📄 SQL Scripts
+## SQL Scripts
 
 ### 1. `01_setup_stages.sql`
 Creates external stages pointing to your S3 bucket locations:
@@ -108,7 +108,7 @@ Comprehensive analytics queries including:
 - Data quality checks
 - Pipeline monitoring queries
 
-## 🐍 Python Integration
+## Python Integration
 
 ### SnowflakeConnector Class
 
@@ -132,7 +132,7 @@ test_results = connector.test_external_tables()
 - `run_sample_queries()` - Execute sample analytics queries
 - `test_external_tables()` - Verify table connectivity and record counts
 
-## 💻 Usage Examples
+## Usage Examples
 
 ### Basic Analytics Queries
 
@@ -202,7 +202,7 @@ FROM ext_raw_users
 WHERE email NOT LIKE '%@%.%';
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -284,7 +284,7 @@ GROUP BY gender;
 
 3. **Result Caching**: Snowflake automatically caches query results for 24 hours.
 
-## 📊 Monitoring and Alerts
+## Monitoring and Alerts
 
 ### Pipeline Health Monitoring
 
@@ -324,22 +324,10 @@ SELECT
 FROM ext_raw_users;
 ```
 
-## 🎯 Next Steps
+## Next Steps
 
 1. **Visualization**: Connect Snowflake to Tableau, Power BI, or Looker
 2. **Machine Learning**: Use Snowpark for advanced analytics
 3. **Data Sharing**: Set up secure data sharing with partners
 4. **Automation**: Create stored procedures for regular data processing
 5. **Scaling**: Implement auto-scaling warehouses for varying workloads
-
-## 📞 Support
-
-For issues specific to:
-- **Snowflake Setup**: Check Snowflake documentation and community forums
-- **Pipeline Integration**: Review main project README and logs
-- **AWS S3 Access**: Verify IAM permissions and bucket policies
-- **Python Connector**: Check `snowflake-connector-python` documentation
-
----
-
-🎉 **Happy Analytics!** Your real-time data pipeline is now connected to Snowflake for powerful analytics and insights. 
