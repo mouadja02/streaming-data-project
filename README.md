@@ -5,7 +5,7 @@ A sequential data pipeline that fetches user data from an external API, streams 
 ## Architecture
 The current architecture of the project is as described below
 
-<img src="architecture.png" alt="architecture" width="400"/>
+<img src="architecture.png" alt="architecture" width="600"/>
 
 
 ### Pipeline Flow
