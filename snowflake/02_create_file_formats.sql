@@ -1,7 +1,7 @@
 -- Snowflake File Formats for Parquet Data
 -- This script creates reusable file formats for different data types
 
-USE DATABASE ECOMMERCE_DATABASE;
+USE DATABASE ECOMMERCE_DB;
 USE SCHEMA STAGING;
 
 -- Standard Parquet format with Snappy compression

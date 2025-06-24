@@ -1,7 +1,7 @@
 -- Snowflake External Tables for Pipeline Data
 -- This script creates external tables that automatically read from S3 Parquet files
 
-USE DATABASE ECOMMERCE_DATABASE;
+USE DATABASE ECOMMERCE_DB;
 USE SCHEMA STAGING;
 
 -- External table for raw user data

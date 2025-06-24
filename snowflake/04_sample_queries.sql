@@ -1,7 +1,7 @@
 -- Sample Analytics Queries for Pipeline Data
 -- This script demonstrates various analytical queries on the external tables
 
-USE DATABASE ECOMMERCE_DATABASE;
+USE DATABASE ECOMMERCE_DB;
 USE SCHEMA STAGING;
 
 -- =====================================================
