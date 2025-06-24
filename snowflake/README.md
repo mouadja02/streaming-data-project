@@ -1,333 +1,227 @@
-# Snowflake Integration for Data Pipeline
+# Snowflake Integration - Medallion Architecture
 
-This directory contains SQL scripts and Python utilities to connect your real-time data pipeline to Snowflake for advanced analytics and visualization.
+This directory contains SQL scripts for implementing a **Medallion Architecture** in Snowflake with Bronze and Silver layers for your data pipeline.
 
-## Table of Contents
+## 🏗️ Architecture Overview
 
-- [Overview](#overview)
-- [Prerequisites](#prerequisites)
-- [Setup Instructions](#setup-instructions)
-- [SQL Scripts](#sql-scripts)
-- [Python Integration](#python-integration)
-- [Usage Examples](#usage-examples)
-- [Troubleshooting](#troubleshooting)
-
-## Overview
-
-The Snowflake integration provides:
-- **External Tables** that automatically read Parquet files from S3
-- **Real-time Analytics** on user data from your Kafka pipeline
-- **Sample Queries** for common analytics use cases
-- **Python Connector** for automated setup and testing
-
-### Architecture Flow
 ```
-Kafka → Spark → S3 (Parquet) → Snowflake External Tables → Analytics
+API → Kafka → Spark → S3 → AWS Glue → Iceberg → Snowflake
+                     ↓
+              Bronze Layer (Raw)
+                     ↓
+              Silver Layer (Processed)
+                     ↓
+              Analytics Queries
 ```
 
-## Prerequisites
+### Medallion Layers
 
-### 1. Snowflake Account
-- Active Snowflake account with appropriate permissions
-- Database, schema, and warehouse already created
-- User with rights to create stages and external tables
+**🟤 Bronze Layer** - Raw data directly from S3:
+- `ext_raw_users` - Raw user data from RandomUser API
+- `ext_user_analytics` - Basic Spark analytics  
+- `ext_user_demographics` - Geographic data
 
-### 2. AWS S3 Access
-- S3 bucket with pipeline data (Parquet files)
-- AWS credentials with S3 read permissions
-- Same credentials used by your data pipeline
+**🥈 Silver Layer** - Processed data from AWS Glue Jobs:
+- `users_transformed_ext` - Enriched user data with quality scores
+- `dim_user_demographics_ext` - User demographics dimension
+- `fact_geographic_analysis_ext` - Geographic analysis
+- `fact_age_generation_analysis_ext` - Age/generation insights
+- `fact_email_provider_analysis_ext` - Email analytics
+- `fact_data_quality_metrics_ext` - Quality monitoring
+- Plus additional fact tables
 
-### 3. Python Dependencies
-```bash
-pip install snowflake-connector-python==3.7.0
+## 📁 File Structure
+
+```
+snowflake/
+├── 01_setup_stages.sql          # S3 storage integration & stages
+├── 02_create_file_formats.sql   # Parquet file formats
+├── 03_create_external_tables.sql # Bronze layer tables
+├── 04_sample_queries.sql        # Legacy queries (Bronze layer)
+├── 05_create_iceberg_tables.sql # Silver layer tables (CI/CD)
+├── 06_analytics_queries.sql     # Analytics queries (User-run)
+└── README.md                    # This documentation
 ```
 
-## Setup Instructions
+## 🚀 Quick Setup
 
-### Step 1: Configure Environment Variables
-
-Add these variables to your `.env` file:
-
+### Step 1: Configure Environment
+Add to your `.env` file:
 ```bash
 # Snowflake Configuration
-SNOWFLAKE_USER=INTERNPROJECT
-SNOWFLAKE_PASSWORD=your_password_here
-SNOWFLAKE_ACCOUNT=your_account-INTERNPROJECT
-SNOWFLAKE_WAREHOUSE=INT_WH
-SNOWFLAKE_DATABASE=ECOMMERCE_DB
-SNOWFLAKE_SCHEMA=STAGING
+SNOWFLAKE_USER=your_snowflake_user
+SNOWFLAKE_PASSWORD=your_password
+SNOWFLAKE_ACCOUNT=your_account
+SNOWFLAKE_WAREHOUSE=your_warehouse
+SNOWFLAKE_DATABASE=your_database
+SNOWFLAKE_SCHEMA=your_schema
 
-# AWS Credentials (same as pipeline)
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-S3_BUCKET_NAME=my-amazing-app
+# Medallion Architecture Layers (Schema names within SNOWFLAKE_DATABASE)
+BRONZE_LAYER=bronze_layer_name
+SILVER_LAYER=silver_layer_name
+GOLD_LAYER=gold_layer_name
+
+# AWS Role for Snowflake Integration
+AWS_ROLE_ARN=arn:aws:iam::your_account_id:role/snowflake-s3-role
 ```
 
-### Step 2: Run Automated Setup
+### Step 2: Deploy via CI/CD
+The CI/CD pipeline automatically creates:
+- ✅ Storage integration and stages
+- ✅ Bronze layer external tables
+- ✅ Silver layer Iceberg tables
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up Snowflake tables automatically
-python snowflake_connector.py
-
-# Or run individual SQL scripts manually in Snowflake UI
+git add .
+git commit -m "deploy: snowflake medallion architecture"
+git push origin main
 ```
 
-### Step 3: Verify Setup
-
-```bash
-# Test external tables
-python snowflake_connector.py query
-```
-
-## SQL Scripts
-
-### 1. `01_setup_stages.sql`
-Creates external stages pointing to your S3 bucket locations:
-- `raw_users_stage` - Raw user data from Kafka
-- `user_analytics_stage` - Processed analytics (gender, email domains)
-- `user_demographics_stage` - Geographic demographics
-
-### 2. `02_create_file_formats.sql`
-Defines Parquet file formats with Snappy compression for optimal performance.
-
-### 3. `03_create_external_tables.sql`
-Creates external tables that automatically map Parquet schema to Snowflake columns:
-- `ext_raw_users` - Individual user records
-- `ext_user_analytics` - Aggregated metrics
-- `ext_user_demographics` - Geographic distributions
-
-### 4. `04_sample_queries.sql`
-Comprehensive analytics queries including:
-- Gender distribution analysis
-- Geographic user distribution
-- Email domain analytics
-- Age group analysis
-- Data quality checks
-- Pipeline monitoring queries
-
-## Python Integration
-
-### SnowflakeConnector Class
-
-```python
-from snowflake_connector import SnowflakeConnector
-
-# Initialize and connect
-connector = SnowflakeConnector()
-connector.connect()
-
-# Execute queries
-results = connector.execute_query("SELECT COUNT(*) FROM ext_raw_users")
-
-# Test all tables
-test_results = connector.test_external_tables()
-```
-
-### Available Functions
-
-- `setup_snowflake_tables()` - Automated setup of all stages and tables
-- `run_sample_queries()` - Execute sample analytics queries
-- `test_external_tables()` - Verify table connectivity and record counts
-
-## Usage Examples
-
-### Basic Analytics Queries
-
+### Step 3: Run Analytics
+After deployment, use the analytics queries:
 ```sql
--- Total users processed
-SELECT COUNT(*) as total_users FROM ext_raw_users;
-
--- Gender distribution
-SELECT 
-  metric_name,
-  metric_value as count,
-  percentage
-FROM ext_user_analytics 
-WHERE metric_type = 'gender_distribution'
-ORDER BY metric_value DESC;
-
--- Top countries
-SELECT 
-  demographic_value as country,
-  user_count,
-  percentage
-FROM ext_user_demographics
-WHERE demographic_type = 'country_distribution'
-ORDER BY user_count DESC
-LIMIT 10;
+-- Copy queries from 06_analytics_queries.sql
+-- Replace ${SNOWFLAKE_DATABASE}, ${BRONZE_LAYER}, and ${SILVER_LAYER} with your actual values
+-- Example: your_database.bronze_schema.table_name
 ```
 
-### Advanced Analytics
+## 📊 Usage Examples
 
+### Bronze Layer (Raw Data Analysis)
 ```sql
--- Age distribution with custom groups
+-- Basic user overview
 SELECT 
-  CASE 
-    WHEN age < 25 THEN '18-24'
-    WHEN age < 35 THEN '25-34'
-    WHEN age < 45 THEN '35-44'
-    WHEN age < 55 THEN '45-54'
-    WHEN age < 65 THEN '55-64'
-    ELSE '65+'
-  END as age_group,
-  COUNT(*) as count
-FROM (
-  SELECT 
-    DATEDIFF('year', TO_DATE(dob), CURRENT_DATE()) as age
-  FROM ext_raw_users
-) 
-GROUP BY age_group
-ORDER BY age_group;
+    COUNT(*) as total_users,
+    COUNT(DISTINCT gender) as gender_types
+FROM your_database.your_bronze_schema.ext_raw_users;
+
+-- Geographic distribution
+SELECT country, user_count, avg_age
+FROM your_database.your_bronze_schema.ext_user_demographics
+ORDER BY user_count DESC LIMIT 10;
 ```
 
-### Data Quality Monitoring
-
+### Silver Layer (Advanced Analytics)
 ```sql
--- Check for data issues
+-- Data quality insights
 SELECT 
-  'Missing emails' as check_type,
-  COUNT(*) as count
-FROM ext_raw_users 
-WHERE email IS NULL OR email = ''
+    target_segment,
+    COUNT(*) as user_count,
+    AVG(data_quality_score) as avg_quality
+FROM your_database.your_silver_schema.dim_user_demographics_ext
+GROUP BY target_segment;
+
+-- Email provider market share
+SELECT 
+    email_provider_type,
+    total_users,
+    ROUND(total_users * 100.0 / SUM(total_users) OVER(), 2) as market_share_pct
+FROM your_database.your_silver_schema.fact_email_provider_analysis_ext
+ORDER BY total_users DESC;
+```
+
+### Cross-Layer Analysis
+```sql
+-- Compare raw vs processed data
+SELECT 
+    'Bronze Layer' as layer,
+    COUNT(*) as record_count
+FROM your_database.your_bronze_schema.ext_raw_users
 
 UNION ALL
 
 SELECT 
-  'Invalid email format' as check_type,
-  COUNT(*) as count
-FROM ext_raw_users 
-WHERE email NOT LIKE '%@%.%';
+    'Silver Layer' as layer,
+    COUNT(*) as record_count
+FROM your_database.your_silver_schema.users_transformed_ext;
 ```
 
-## Troubleshooting
+## 🔧 Manual Setup (Alternative)
+
+If not using CI/CD, run scripts manually in this order:
+
+1. **Setup Storage** (Admin): `01_setup_stages.sql`
+2. **File Formats**: `02_create_file_formats.sql`  
+3. **Bronze Tables**: `03_create_external_tables.sql`
+4. **Silver Tables**: `05_create_iceberg_tables.sql`
+5. **Analytics**: `06_analytics_queries.sql`
+
+## 📈 Available Analytics
+
+### Demographic Analysis
+- Target segment distribution
+- Generation and age group insights
+- Geographic diversity analysis
+- Business vs personal email patterns
+
+### Data Quality Monitoring
+- Quality score distributions
+- Email/phone validation rates
+- Data completeness metrics
+- Quality trends by segment
+
+### Email Provider Insights
+- Market share analysis
+- Domain popularity trends
+- Provider age demographics
+- Geographic email patterns
+
+### Geographic Analysis
+- Top countries by user count
+- Cities with business email concentration
+- Regional diversity metrics
+- Geographic expansion patterns
+
+## 🛠️ Troubleshooting
 
 ### Common Issues
 
-#### 1. **Connection Failed**
-```
-❌ Failed to connect to Snowflake: 250001 (08001): Failed to connect
-```
-**Solution:**
-- Verify Snowflake credentials in `.env`
-- Check account identifier format: `account-organization`
-- Ensure warehouse is running and accessible
-
-#### 2. **External Table Empty**
-```
-✅ ext_raw_users: 0 records
-```
-**Solutions:**
-- Verify S3 bucket has Parquet files: `LIST @raw_users_stage;`
-- Check AWS credentials have S3 read permissions
-- Ensure pipeline has uploaded data to S3
-- Verify S3 path matches stage URL
-
-#### 3. **Permission Denied**
-```
-SQL access control error: Insufficient privileges
-```
-**Solutions:**
-- Grant `CREATE STAGE` privilege to user
-- Grant `CREATE TABLE` privilege to user
-- Ensure user has `USAGE` on warehouse and database
-
-#### 4. **File Format Issues**
-```
-Error parsing Parquet file
-```
-**Solutions:**
-- Verify Parquet files are valid: check pipeline logs
-- Ensure Snappy compression is used
-- Check schema compatibility between Spark and Snowflake
-
-### Debugging Commands
-
+**Storage Integration Errors:**
 ```sql
--- Check stages
-SHOW STAGES;
-LIST @raw_users_stage;
+-- Check integration status
+DESC STORAGE INTEGRATION s3_iceberg_integration;
 
--- Check external tables
-SHOW EXTERNAL TABLES;
-DESCRIBE TABLE ext_raw_users;
-
--- Test file access
-SELECT $1 FROM @raw_users_stage LIMIT 1;
-
--- Check recent errors
-SELECT * FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
-WHERE QUERY_TEXT ILIKE '%ext_raw_users%'
-ORDER BY START_TIME DESC
-LIMIT 5;
+-- Test stage access
+LIST @iceberg_stage;
 ```
+
+**External Table Issues:**
+```sql
+-- Check table metadata
+SHOW EXTERNAL TABLES;
+
+-- Refresh external table
+ALTER EXTERNAL TABLE table_name REFRESH;
+```
+
+**No Data in Tables:**
+- Verify S3 bucket permissions
+- Check AWS role trust policy
+- Ensure Parquet files exist in S3
+- Verify AUTO_REFRESH is enabled
 
 ### Performance Optimization
 
-1. **Clustering Keys** (for large datasets):
-```sql
-ALTER TABLE ext_raw_users CLUSTER BY (registered_date);
-```
+**For Large Datasets:**
+- Use clustering keys on frequently queried columns
+- Implement result caching for repeated queries
+- Use appropriate warehouse sizes
+- Consider materialized views for complex aggregations
 
-2. **Materialized Views** (for frequently accessed aggregations):
-```sql
-CREATE MATERIALIZED VIEW mv_user_summary AS
-SELECT 
-  gender,
-  COUNT(*) as count,
-  AVG(DATEDIFF('year', TO_DATE(dob), CURRENT_DATE())) as avg_age
-FROM ext_raw_users
-GROUP BY gender;
-```
+## 🔐 Security Best Practices
 
-3. **Result Caching**: Snowflake automatically caches query results for 24 hours.
+- Use least-privilege AWS IAM roles
+- Rotate Snowflake passwords regularly
+- Enable MFA on Snowflake accounts
+- Monitor external table access logs
+- Use private endpoints when possible
 
-## Monitoring and Alerts
+## 📚 Additional Resources
 
-### Pipeline Health Monitoring
+- [Snowflake External Tables Documentation](https://docs.snowflake.com/en/user-guide/tables-external-intro.html)
+- [AWS S3 Integration Guide](https://docs.snowflake.com/en/user-guide/data-load-s3.html)
+- [Medallion Architecture Best Practices](https://databricks.com/glossary/medallion-architecture)
 
-```sql
--- Monitor data freshness
-SELECT 
-  'Raw Data' as data_type,
-  MAX(TO_TIMESTAMP(registered_date)) as latest_record,
-  COUNT(*) as total_records
-FROM ext_raw_users
+---
 
-UNION ALL
-
-SELECT 
-  'Analytics' as data_type,
-  MAX(created_at) as latest_record,
-  COUNT(*) as total_records
-FROM ext_user_analytics;
-```
-
-### Set Up Alerts
-
-Create Snowflake tasks to monitor data pipeline health:
-
-```sql
--- Create task to check data freshness daily
-CREATE OR REPLACE TASK pipeline_health_check
-  WAREHOUSE = INT_WH
-  SCHEDULE = 'USING CRON 0 9 * * * UTC'  -- Daily at 9 AM UTC
-AS
-SELECT 
-  CASE 
-    WHEN MAX(TO_TIMESTAMP(registered_date)) < DATEADD('hour', -25, CURRENT_TIMESTAMP())
-    THEN 'ALERT: Data pipeline may be down'
-    ELSE 'OK: Data pipeline healthy'
-  END as status
-FROM ext_raw_users;
-```
-
-## Next Steps
-
-1. **Visualization**: Connect Snowflake to Tableau, Power BI, or Looker
-2. **Machine Learning**: Use Snowpark for advanced analytics
-3. **Data Sharing**: Set up secure data sharing with partners
-4. **Automation**: Create stored procedures for regular data processing
-5. **Scaling**: Implement auto-scaling warehouses for varying workloads
+**Need Help?** Check the main project README or open an issue for support.

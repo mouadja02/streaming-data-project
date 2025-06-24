@@ -1,3 +1,30 @@
+-- =========================================================================
+-- Snowflake Storage Integration and Stage Setup
+-- =========================================================================
+-- This script sets up the S3 storage integration and stages for Iceberg tables
+-- Environment variables will be substituted during CI/CD deployment
+
+-- Create storage integration for S3 access (Iceberg warehouse)
+CREATE OR REPLACE STORAGE INTEGRATION s3_iceberg_integration
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = 'S3'
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = '${AWS_ROLE_ARN}'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://${S3_BUCKET_NAME}/iceberg-warehouse/');
+
+-- Describe the integration to get the external ID for AWS role trust policy
+-- Note: Run this manually to get the STORAGE_AWS_EXTERNAL_ID for your AWS role trust policy
+DESC STORAGE INTEGRATION s3_iceberg_integration;
+
+-- Create stage for Iceberg tables
+CREATE OR REPLACE STAGE iceberg_stage
+  STORAGE_INTEGRATION = s3_iceberg_integration
+  URL = 's3://${S3_BUCKET_NAME}/iceberg-warehouse/'
+  FILE_FORMAT = (TYPE = PARQUET);
+
+-- Test the stage (uncomment to verify setup)
+-- LIST @iceberg_stage;
+
 -- Snowflake Setup: Create Stages for S3 Parquet Files
 -- This script sets up external stages to read Parquet files from S3
 

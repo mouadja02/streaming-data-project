@@ -1,0 +1,165 @@
+{
+  "database": "data_pipeline_db",
+  "description": "Complete catalog table schemas for all three Glue jobs",
+  "tables": {
+    "users_cleaned": {
+      "job": "data-pipeline-raw-transformation",
+      "description": "Cleaned and enriched user data from raw transformation job",
+      "location": "s3://my-amazing-app/iceberg-warehouse/users_cleaned/",
+      "partitions": ["year", "month"],
+      "columns": [
+        {"name": "id", "type": "string", "comment": "User unique identifier"},
+        {"name": "first_name", "type": "string", "comment": "User first name"},
+        {"name": "last_name", "type": "string", "comment": "User last name"},
+        {"name": "gender", "type": "string", "comment": "User gender"},
+        {"name": "address", "type": "string", "comment": "Full address"},
+        {"name": "post_code", "type": "string", "comment": "Postal code"},
+        {"name": "email", "type": "string", "comment": "Email address"},
+        {"name": "username", "type": "string", "comment": "Username"},
+        {"name": "dob", "type": "date", "comment": "Date of birth"},
+        {"name": "registered_date", "type": "date", "comment": "Registration date"},
+        {"name": "phone", "type": "string", "comment": "Phone number"},
+        {"name": "picture", "type": "string", "comment": "Profile picture URL"},
+        {"name": "age", "type": "int", "comment": "Calculated age"},
+        {"name": "age_group", "type": "string", "comment": "Age category"},
+        {"name": "generation", "type": "string", "comment": "Generation category"},
+        {"name": "email_domain", "type": "string", "comment": "Email domain extracted"},
+        {"name": "email_provider_type", "type": "string", "comment": "Email provider type"},
+        {"name": "phone_cleaned", "type": "string", "comment": "Cleaned phone number"},
+        {"name": "data_quality_score", "type": "double", "comment": "Data quality score"},
+        {"name": "processing_timestamp", "type": "timestamp", "comment": "Processing timestamp"}
+      ]
+    },
+    "user_demographics": {
+      "job": "data-pipeline-analytics-aggregation",
+      "description": "User demographics dimension table with scoring and segmentation",
+      "location": "s3://my-amazing-app/iceberg-warehouse/user_demographics/",
+      "partitions": ["segment"],
+      "columns": [
+        {"name": "demographic_key", "type": "string", "comment": "Unique demographic key"},
+        {"name": "gender", "type": "string", "comment": "User gender"},
+        {"name": "age_group", "type": "string", "comment": "Age group category"},
+        {"name": "generation", "type": "string", "comment": "Generation category"},
+        {"name": "user_count", "type": "bigint", "comment": "Number of users in this demographic"},
+        {"name": "avg_age", "type": "double", "comment": "Average age in this demographic"},
+        {"name": "avg_quality_score", "type": "double", "comment": "Average data quality score"},
+        {"name": "engagement_score", "type": "double", "comment": "Calculated engagement score"},
+        {"name": "segment", "type": "string", "comment": "User segment (High Value, Standard, etc.)"},
+        {"name": "created_at", "type": "timestamp", "comment": "Record creation timestamp"},
+        {"name": "updated_at", "type": "timestamp", "comment": "Last update timestamp"}
+      ]
+    },
+    "geographic_analysis": {
+      "job": "data-pipeline-analytics-aggregation",
+      "description": "Geographic analysis at country and city levels",
+      "location": "s3://my-amazing-app/iceberg-warehouse/geographic_analysis/",
+      "partitions": ["country"],
+      "columns": [
+        {"name": "location_key", "type": "string", "comment": "Unique location identifier"},
+        {"name": "country", "type": "string", "comment": "Country name"},
+        {"name": "state_province", "type": "string", "comment": "State or province"},
+        {"name": "city", "type": "string", "comment": "City name"},
+        {"name": "user_count", "type": "bigint", "comment": "Number of users in this location"},
+        {"name": "gender_distribution", "type": "map<string,bigint>", "comment": "Gender distribution map"},
+        {"name": "avg_age", "type": "double", "comment": "Average age in this location"},
+        {"name": "dominant_age_group", "type": "string", "comment": "Most common age group"},
+        {"name": "market_penetration_score", "type": "double", "comment": "Market penetration score"},
+        {"name": "created_at", "type": "timestamp", "comment": "Record creation timestamp"},
+        {"name": "updated_at", "type": "timestamp", "comment": "Last update timestamp"}
+      ]
+    },
+    "age_generation_analysis": {
+      "job": "data-pipeline-analytics-aggregation",
+      "description": "Age and generation analysis with engagement scoring",
+      "location": "s3://my-amazing-app/iceberg-warehouse/age_generation_analysis/",
+      "partitions": ["generation"],
+      "columns": [
+        {"name": "analysis_key", "type": "string", "comment": "Unique analysis identifier"},
+        {"name": "age_group", "type": "string", "comment": "Age group category"},
+        {"name": "generation", "type": "string", "comment": "Generation category"},
+        {"name": "user_count", "type": "bigint", "comment": "Number of users"},
+        {"name": "min_age", "type": "int", "comment": "Minimum age in group"},
+        {"name": "max_age", "type": "int", "comment": "Maximum age in group"},
+        {"name": "avg_age", "type": "double", "comment": "Average age"},
+        {"name": "gender_distribution", "type": "map<string,bigint>", "comment": "Gender distribution"},
+        {"name": "engagement_score", "type": "double", "comment": "Engagement score"},
+        {"name": "avg_quality_score", "type": "double", "comment": "Average data quality"},
+        {"name": "created_at", "type": "timestamp", "comment": "Record creation timestamp"},
+        {"name": "updated_at", "type": "timestamp", "comment": "Last update timestamp"}
+      ]
+    },
+    "registration_trends": {
+      "job": "data-pipeline-time-series-analysis",
+      "description": "User registration trends and patterns over time",
+      "location": "s3://my-amazing-app/iceberg-warehouse/registration_trends/",
+      "partitions": ["year", "time_period"],
+      "columns": [
+        {"name": "trend_key", "type": "string", "comment": "Unique trend identifier"},
+        {"name": "time_period", "type": "string", "comment": "Time period (monthly, quarterly, etc.)"},
+        {"name": "period_start", "type": "date", "comment": "Period start date"},
+        {"name": "period_end", "type": "date", "comment": "Period end date"},
+        {"name": "registration_count", "type": "bigint", "comment": "Number of registrations"},
+        {"name": "cumulative_count", "type": "bigint", "comment": "Cumulative registrations"},
+        {"name": "growth_rate", "type": "double", "comment": "Period-over-period growth rate"},
+        {"name": "avg_age", "type": "double", "comment": "Average age of registrants"},
+        {"name": "gender_distribution", "type": "map<string,bigint>", "comment": "Gender distribution"},
+        {"name": "is_anomaly", "type": "boolean", "comment": "Anomaly detection flag"},
+        {"name": "anomaly_score", "type": "double", "comment": "Anomaly score (z-score)"},
+        {"name": "created_at", "type": "timestamp", "comment": "Analysis timestamp"}
+      ]
+    },
+    "geographic_expansion": {
+      "job": "data-pipeline-time-series-analysis",
+      "description": "Geographic expansion patterns and market penetration over time",
+      "location": "s3://my-amazing-app/iceberg-warehouse/geographic_expansion/",
+      "partitions": ["country", "year"],
+      "columns": [
+        {"name": "expansion_key", "type": "string", "comment": "Unique expansion identifier"},
+        {"name": "country", "type": "string", "comment": "Country name"},
+        {"name": "state_province", "type": "string", "comment": "State or province"},
+        {"name": "time_period", "type": "string", "comment": "Time period"},
+        {"name": "period_start", "type": "date", "comment": "Period start date"},
+        {"name": "period_end", "type": "date", "comment": "Period end date"},
+        {"name": "new_users", "type": "bigint", "comment": "New users in period"},
+        {"name": "total_users", "type": "bigint", "comment": "Total users in location"},
+        {"name": "penetration_rate", "type": "double", "comment": "Market penetration rate"},
+        {"name": "growth_rate", "type": "double", "comment": "Growth rate"},
+        {"name": "is_new_market", "type": "boolean", "comment": "New market flag"},
+        {"name": "expansion_score", "type": "double", "comment": "Expansion opportunity score"},
+        {"name": "created_at", "type": "timestamp", "comment": "Analysis timestamp"}
+      ]
+    },
+    "data_quality_trends": {
+      "job": "data-pipeline-time-series-analysis",
+      "description": "Data quality trends and anomaly detection over time",
+      "location": "s3://my-amazing-app/iceberg-warehouse/data_quality_trends/",
+      "partitions": ["year", "quality_trend"],
+      "columns": [
+        {"name": "quality_key", "type": "string", "comment": "Unique quality identifier"},
+        {"name": "time_period", "type": "string", "comment": "Time period"},
+        {"name": "period_start", "type": "date", "comment": "Period start date"},
+        {"name": "period_end", "type": "date", "comment": "Period end date"},
+        {"name": "avg_quality_score", "type": "double", "comment": "Average quality score"},
+        {"name": "min_quality_score", "type": "double", "comment": "Minimum quality score"},
+        {"name": "max_quality_score", "type": "double", "comment": "Maximum quality score"},
+        {"name": "quality_trend", "type": "string", "comment": "Quality trend (Improving, Declining, Stable)"},
+        {"name": "records_processed", "type": "bigint", "comment": "Total records processed"},
+        {"name": "high_quality_records", "type": "bigint", "comment": "High quality records (>0.8)"},
+        {"name": "low_quality_records", "type": "bigint", "comment": "Low quality records (<0.5)"},
+        {"name": "quality_issues", "type": "array<string>", "comment": "List of quality issues detected"},
+        {"name": "is_anomaly", "type": "boolean", "comment": "Quality anomaly flag"},
+        {"name": "anomaly_score", "type": "double", "comment": "Quality anomaly score"},
+        {"name": "created_at", "type": "timestamp", "comment": "Analysis timestamp"}
+      ]
+    }
+  },
+  "summary": {
+    "total_tables": 7,
+    "job_1_tables": 1,
+    "job_2_tables": 3,
+    "job_3_tables": 3,
+    "iceberg_warehouse_location": "s3://my-amazing-app/iceberg-warehouse/",
+    "supported_formats": ["parquet"],
+    "compression": "snappy"
+  }
+} 

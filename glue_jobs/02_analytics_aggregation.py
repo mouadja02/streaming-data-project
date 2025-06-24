@@ -44,13 +44,6 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-# Configure Iceberg
-spark.conf.set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
-spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", args['S3_OUTPUT_PATH'])
-spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
-spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
-
 def create_user_demographics_dim(df: DataFrame) -> DataFrame:
     """
     Create user demographics dimension table
@@ -266,7 +259,7 @@ def create_email_communication_analysis(df: DataFrame) -> DataFrame:
         "gender_ratio_male_female",
         when(col("female_users") > 0, 
              round(col("male_users").cast("double") / col("female_users"), 2))
-        .otherwise(null())
+        .otherwise(lit(None)) 
     )
     
     # Provider type summary

@@ -43,12 +43,11 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-# Configure Iceberg
-spark.conf.set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
-spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", args['S3_OUTPUT_PATH'])
-spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
-spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+# Define catalog tables based on the base table name
+CATALOG_TABLES = {
+    'users_transformed': f"{args['CATALOG_TABLE']}_transformed",
+    'data_quality_summary': f"{args['CATALOG_TABLE']}_quality_summary"
+}
 
 def validate_and_cleanse_data(df: DataFrame) -> DataFrame:
     """
@@ -127,7 +126,7 @@ def enrich_user_data(df: DataFrame) -> DataFrame:
     # Calculate age from date of birth
     df_enriched = df.withColumn(
         "birth_date",
-        to_date(col("dob"), "yyyy-MM-dd")
+        to_date(to_timestamp(col("dob"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
     ).withColumn(
         "age_years",
         floor(datediff(current_date(), col("birth_date")) / 365.25)
@@ -193,16 +192,16 @@ def enrich_user_data(df: DataFrame) -> DataFrame:
     ).withColumn(
         "phone_formatted",
         when(length(col("phone_clean")) == 10,
-             concat(lit("("), substr(col("phone_clean"), 1, 3), lit(") "),
-                   substr(col("phone_clean"), 4, 3), lit("-"),
-                   substr(col("phone_clean"), 7, 4)))
+             concat(lit("("), substring(col("phone_clean"), 1, 3), lit(") "),
+                   substring(col("phone_clean"), 4, 3), lit("-"),
+                   substring(col("phone_clean"), 7, 4)))
         .otherwise(col("phone"))
     )
     
     # Calculate registration tenure
     df_enriched = df_enriched.withColumn(
         "registration_date",
-        to_date(col("registered_date"), "yyyy-MM-dd")
+        to_date(to_timestamp(col("registered_date"), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
     ).withColumn(
         "account_age_days",
         datediff(current_date(), col("registration_date"))
@@ -274,7 +273,7 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
     
     try:
         # Write to Iceberg table
-        df.writeTo(full_table_name).using("iceberg").mode(write_mode).save()
+        df.write.format("iceberg").mode(write_mode).saveAsTable(full_table_name)
         print(f"✅ Successfully saved to Iceberg table: {full_table_name}")
         
         # Print table info
@@ -295,6 +294,9 @@ def main():
     print(f"📥 Input Path: {args['S3_INPUT_PATH']}")
     print(f"📤 Output Path: {args['S3_OUTPUT_PATH']}")
     print(f"🗄️ Database: {args['CATALOG_DATABASE']}")
+    print(f"📋 Target Tables:")
+    for key, table_name in CATALOG_TABLES.items():
+        print(f"  • {key}: {table_name}")
     
     try:
         # Read raw data from S3
@@ -358,12 +360,12 @@ def main():
         final_df.printSchema()
         
         # Step 4: Save to Iceberg table
-        save_to_iceberg_table(final_df, "users_transformed", "overwrite")
+        save_to_iceberg_table(final_df, CATALOG_TABLES['users_transformed'], "overwrite")
         
         # Step 5: Create and save data quality summary
         quality_summary_df = create_data_quality_summary(enriched_df)
         quality_summary_df.show(truncate=False)
-        save_to_iceberg_table(quality_summary_df, "data_quality_summary", "append")
+        save_to_iceberg_table(quality_summary_df, CATALOG_TABLES['data_quality_summary'], "append")
         
         # Step 6: Create sample views for analysis
         final_df.createOrReplaceTempView("users_transformed")

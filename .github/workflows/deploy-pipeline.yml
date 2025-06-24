@@ -84,12 +84,17 @@ jobs:
       run: |
         pip install boto3 awscli
         
-    - name: 🗄️ Create Glue Database
+    - name: 🗄️ Create Glue Database and Catalog Tables
       run: |
-        echo "🗄️ Creating Glue catalog database..."
-        aws glue create-database \
-          --database-input Name=${{ env.GLUE_DATABASE_NAME }},Description="Database for data pipeline Iceberg tables" \
-          --region ${{ env.AWS_REGION }} || echo "Database already exists"
+        echo "🗄️ Creating Glue catalog database and tables..."
+        
+        # Install required Python packages
+        pip install python-dotenv
+        
+        # Create database and all catalog tables
+        python scripts/setup_all_catalog_tables.py
+        
+        echo "✅ All catalog tables created successfully!"
         
     - name: 🔐 Create/Update IAM Role for Glue
       run: |
@@ -180,10 +185,6 @@ jobs:
         # Get the role ARN
         ROLE_ARN=$(aws iam get-role --role-name ${{ env.GLUE_ROLE_NAME }} --query 'Role.Arn' --output text)
         echo "Using role: $ROLE_ARN"
-        
-        aws glue delete-job --job-name data-pipeline-raw-transformation || true
-        aws glue delete-job --job-name data-pipeline-analytics-aggregation || true
-        aws glue delete-job --job-name data-pipeline-time-series-analysis || true
 
         # Job 1: Raw Data Transformation
         cat > job1-config.json << EOF
@@ -206,14 +207,15 @@ jobs:
             "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
             "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--CATALOG_TABLE": "users_cleaned",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
             "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
             "--datalake-formats": "iceberg"
           },
-          "MaxRetries": 2,
+          "MaxRetries": 0,
           "Timeout": 2880,
           "GlueVersion": "4.0",
-          "NumberOfWorkers": 5,
+          "NumberOfWorkers": 3,
           "WorkerType": "G.1X",
           "Tags": {
             "Environment": "production",
@@ -257,7 +259,7 @@ jobs:
             "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
             "--datalake-formats": "iceberg"
           },
-          "MaxRetries": 2,
+          "MaxRetries": 0,
           "Timeout": 2880,
           "GlueVersion": "4.0",
           "NumberOfWorkers": 3,
@@ -304,7 +306,7 @@ jobs:
             "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
             "--datalake-formats": "iceberg"
           },
-          "MaxRetries": 2,
+          "MaxRetries": 0,
           "Timeout": 2880,
           "GlueVersion": "4.0",
           "NumberOfWorkers": 3,

@@ -3,3 +3,4 @@ pyvenv.cfg
 venv
 output
 tmp
+dbt_*
