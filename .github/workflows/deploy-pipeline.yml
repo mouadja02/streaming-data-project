@@ -14,7 +14,7 @@ on:
       - 'snowflake/**'
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: ${{ secrets.AWS_REGION }}
   GLUE_ROLE_NAME: data-engineer-user
   GLUE_DATABASE_NAME: data_pipeline_db
   S3_SCRIPTS_PREFIX: glue-scripts/
