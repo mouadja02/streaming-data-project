@@ -60,7 +60,7 @@ SNOWFLAKE_SCHEMA=STAGING
 # AWS Credentials (same as pipeline)
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
-S3_BUCKET=my-amazing-app
+S3_BUCKET_NAME=my-amazing-app
 ```
 
 ### Step 2: Run Automated Setup

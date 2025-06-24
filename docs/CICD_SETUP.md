@@ -30,7 +30,7 @@ You need to configure these secrets in your GitHub repository:
 ```
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-S3_BUCKET=your-s3-bucket-name
+S3_BUCKET_NAME=your-s3-bucket-name
 ```
 
 ### Snowflake Credentials
@@ -57,7 +57,7 @@ SNOWFLAKE_SCHEMA=STAGING
 # Your AWS credentials (same as in .env file)
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=xyz123...
-S3_BUCKET=my-amazing-app
+S3_BUCKET_NAME=my-amazing-app
 ```
 
 #### Snowflake Secrets Setup:

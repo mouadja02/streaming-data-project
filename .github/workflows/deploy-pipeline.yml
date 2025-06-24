@@ -15,7 +15,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  GLUE_ROLE_NAME: DataPipelineGlueRole
+  GLUE_ROLE_NAME: data-engineer-user
   GLUE_DATABASE_NAME: data_pipeline_db
   S3_SCRIPTS_PREFIX: glue-scripts/
 
@@ -163,13 +163,13 @@ jobs:
         
         # Upload all Glue job scripts
         aws s3 cp glue_jobs/01_raw_data_transformation.py \
-          s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}01_raw_data_transformation.py
+          s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_SCRIPTS_PREFIX }}01_raw_data_transformation.py
         
         aws s3 cp glue_jobs/02_analytics_aggregation.py \
-          s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}02_analytics_aggregation.py
+          s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_SCRIPTS_PREFIX }}02_analytics_aggregation.py
         
         aws s3 cp glue_jobs/03_time_series_analysis.py \
-          s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}03_time_series_analysis.py
+          s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_SCRIPTS_PREFIX }}03_time_series_analysis.py
         
         echo "✅ All scripts uploaded successfully!"
         
@@ -189,7 +189,7 @@ jobs:
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
-            "ScriptLocation": "s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}01_raw_data_transformation.py",
+            "ScriptLocation": "s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_SCRIPTS_PREFIX }}01_raw_data_transformation.py",
             "PythonVersion": "3"
           },
           "DefaultArguments": {
@@ -198,9 +198,9 @@ jobs:
             "--enable-metrics": "true",
             "--enable-continuous-cloudwatch-log": "true",
             "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET }}/spark-logs/",
-            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET }}",
-            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET }}/iceberg-warehouse",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
             "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
@@ -236,7 +236,7 @@ jobs:
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
-            "ScriptLocation": "s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}02_analytics_aggregation.py",
+            "ScriptLocation": "s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_SCRIPTS_PREFIX }}02_analytics_aggregation.py",
             "PythonVersion": "3"
           },
           "DefaultArguments": {
@@ -245,9 +245,9 @@ jobs:
             "--enable-metrics": "true",
             "--enable-continuous-cloudwatch-log": "true",
             "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET }}/spark-logs/",
-            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET }}",
-            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET }}/iceberg-warehouse",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
             "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
@@ -283,7 +283,7 @@ jobs:
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
-            "ScriptLocation": "s3://${{ secrets.S3_BUCKET }}/${{ env.S3_SCRIPTS_PREFIX }}03_time_series_analysis.py",
+            "ScriptLocation": "s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.S3_SCRIPTS_PREFIX }}03_time_series_analysis.py",
             "PythonVersion": "3"
           },
           "DefaultArguments": {
@@ -292,9 +292,9 @@ jobs:
             "--enable-metrics": "true",
             "--enable-continuous-cloudwatch-log": "true",
             "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET }}/spark-logs/",
-            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET }}",
-            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET }}/iceberg-warehouse",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
             "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",

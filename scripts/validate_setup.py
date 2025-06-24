@@ -27,7 +27,7 @@ def check_env_variables() -> Dict[str, Any]:
         'AWS': [
             'AWS_ACCESS_KEY_ID',
             'AWS_SECRET_ACCESS_KEY',
-            'S3_BUCKET'
+            'S3_BUCKET_NAME'
         ],
         'Snowflake': [
             'SNOWFLAKE_USER',
