@@ -241,7 +241,7 @@ def create_data_quality_summary(df: DataFrame) -> DataFrame:
     """
     Create a summary of data quality metrics
     """
-    print("📊 Creating data quality summary...")
+    print("Creating data quality summary...")
     
     total_records = df.count()
     
@@ -273,7 +273,7 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
     """
     Save DataFrame to Iceberg table with proper configuration
     """
-    print(f"💾 Saving data to Iceberg table: {table_name}")
+    print(f"Saving data to Iceberg table: {table_name}")
     
     # Map table names to S3 locations to match catalog setup
     table_locations = {
@@ -306,17 +306,17 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
         writer.mode(write_mode).saveAsTable(full_table_name)
         
         print(f"✅ Successfully saved to Iceberg table: {full_table_name}")
-        print(f"📍 Location: {s3_location}")
+        print(f"Location: {s3_location}")
         
         # Print table info
         try:
             spark.sql(f"DESCRIBE TABLE {full_table_name}").show(truncate=False)
         except:
-            print("ℹ️ Could not describe table (normal for first run)")
+            print("Could not describe table (normal for first run)")
         
     except Exception as e:
         print(f"❌ Error saving to Iceberg table: {str(e)}")
-        print(f"🔄 Attempting alternative Iceberg write method...")
+        print(f"Attempting alternative Iceberg write method...")
         
         try:
             # Alternative method: Create table first, then insert
@@ -339,27 +339,27 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
             print(f"❌ Alternative method also failed: {str(e2)}")
             # Final fallback to Parquet
             fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
-            print(f"💾 Final fallback to Parquet format at: {fallback_path}")
+            print(f"Final fallback to Parquet format at: {fallback_path}")
             df.write.mode(write_mode).parquet(fallback_path)
 
 def main():
     """
     Main transformation pipeline
     """
-    print("🚀 Starting Raw User Data Transformation Job")
-    print(f"📥 Input Path: {args['S3_INPUT_PATH']}")
-    print(f"📤 Output Path: {args['S3_OUTPUT_PATH']}")
-    print(f"🗄️ Database: {args['CATALOG_DATABASE']}")
-    print(f"📋 Target Tables:")
+    print("Starting Raw User Data Transformation Job")
+    print(f"Input Path: {args['S3_INPUT_PATH']}")
+    print(f"Output Path: {args['S3_OUTPUT_PATH']}")
+    print(f"Database: {args['CATALOG_DATABASE']}")
+    print(f"Target Tables:")
     for key, table_name in CATALOG_TABLES.items():
         print(f"  • {key}: {table_name}")
     
     try:
         # Read raw data from S3
-        print("📖 Reading raw data from S3...")
+        print("Reading raw data from S3...")
         raw_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/users/raw/parquet/")
         
-        print(f"📊 Raw data count: {raw_df.count()} records")
+        print(f"Raw data count: {raw_df.count()} records")
         raw_df.printSchema()
         
         # Step 1: Validate and cleanse data
@@ -412,7 +412,7 @@ def main():
             col("glue_job_name")
         )
         
-        print(f"📊 Final transformed data count: {final_df.count()} records")
+        print(f"Final transformed data count: {final_df.count()} records")
         final_df.printSchema()
         
         # Step 4: Save to Iceberg table
@@ -427,7 +427,7 @@ def main():
         final_df.createOrReplaceTempView("users_transformed")
         
         # Sample analytics queries
-        print("📈 Sample Analytics:")
+        print("Sample Analytics:")
         
         # Age distribution
         spark.sql("""

@@ -219,7 +219,7 @@ SNOWFLAKE_SCHEMA=BRONZE_LAYER
 
 def main():
     """Main validation function"""
-    print("🚀 Data Pipeline Setup Validation")
+    print("Data Pipeline Setup Validation")
     print("=" * 50)
     
     all_checks_passed = True
@@ -236,7 +236,7 @@ def main():
                 all_checks_passed = False
     
     # Check required files
-    print("\n📁 Required Files:")
+    print("\nRequired Files:")
     file_results = check_required_files()
     for file_path, exists in file_results.items():
         status = "✅" if exists else "❌"
@@ -245,7 +245,7 @@ def main():
             all_checks_passed = False
     
     # Check AWS connectivity
-    print("\n☁️ AWS Connectivity:")
+    print("\nAWS Connectivity:")
     aws_results = check_aws_connectivity()
     if 'error' in aws_results:
         print(f"  ❌ {aws_results['error']}")
@@ -259,7 +259,7 @@ def main():
                     all_checks_passed = False
     
     # Check Snowflake connectivity
-    print("\n🏔️ Snowflake Connectivity:")
+    print("\nSnowflake Connectivity:")
     snowflake_results = check_snowflake_connectivity()
     if 'error' in snowflake_results:
         print(f"  ❌ {snowflake_results['error']}")
@@ -275,19 +275,19 @@ def main():
     # Summary
     print("\n" + "=" * 50)
     if all_checks_passed:
-        print("🎉 ALL CHECKS PASSED!")
-        print("✅ Your setup is ready for CI/CD deployment")
-        print("\n🚀 Next steps:")
+        print("ALL CHECKS PASSED!")
+        print("Your setup is ready for CI/CD deployment")
+        print("\t Next steps:")
         print("1. Configure GitHub secrets (see template below)")
         print("2. Push changes to main branch")
         print("3. Monitor GitHub Actions workflow")
         print("4. Run Glue jobs in AWS Console")
     else:
         print("❌ SOME CHECKS FAILED")
-        print("🔧 Please fix the issues above before deployment")
+        print("Please fix the issues above before deployment")
         
     # Generate GitHub secrets template
-    print("\n📝 GitHub Secrets Template:")
+    print("\nGitHub Secrets Template:")
     print(generate_github_secrets_template())
     
     return all_checks_passed

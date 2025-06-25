@@ -191,7 +191,7 @@ def create_registration_trends(df: DataFrame) -> DataFrame:
 
 def create_geographic_expansion_trends(df: DataFrame) -> DataFrame:
     """Analyze geographic expansion patterns over time"""
-    print("🌍 Creating geographic expansion trends...")
+    print("Creating geographic expansion trends...")
     
     # Country expansion over time
     country_expansion = df.groupBy("country", "processing_date").agg(
@@ -241,7 +241,7 @@ def create_geographic_expansion_trends(df: DataFrame) -> DataFrame:
 
 def create_age_demographic_trends(df: DataFrame) -> DataFrame:
     """Analyze age demographic trends over time"""
-    print("👥 Creating age demographic trends...")
+    print("Creating age demographic trends...")
     
     # Age group trends by registration year
     age_trends = df.groupBy("age_group", "generation", "registration_date", "processing_date").agg(
@@ -293,7 +293,7 @@ def create_age_demographic_trends(df: DataFrame) -> DataFrame:
 
 def create_data_quality_trends(df: DataFrame) -> DataFrame:
     """Analyze data quality trends over time"""
-    print("🔍 Creating data quality trends...")
+    print("Creating data quality trends...")
     
     # Daily data quality trends
     daily_quality = df.groupBy("processing_date").agg(
@@ -344,7 +344,7 @@ def create_data_quality_trends(df: DataFrame) -> DataFrame:
 
 def detect_anomalies(df: DataFrame, metric_col: str, threshold_multiplier: float = 2.0) -> DataFrame:
     """Detect anomalies in time series data using statistical methods"""
-    print(f"🚨 Detecting anomalies in {metric_col}...")
+    print(f"Detecting anomalies in {metric_col}...")
     
     # Calculate statistical measures
     stats = df.select(
@@ -397,29 +397,29 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
         print(f"❌ Error saving to Iceberg table: {str(e)}")
         # Fallback to Parquet
         fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
-        print(f"💾 Falling back to Parquet at: {fallback_path}")
+        print(f"Falling back to Parquet at: {fallback_path}")
         df.write.mode(write_mode).parquet(fallback_path)
 
 def main():
     """Main time series analysis pipeline"""
-    print("🚀 Starting Time Series Analysis Job")
-    print(f"📥 Input Path: {args['S3_INPUT_PATH']}")
-    print(f"📤 Output Path: {args['S3_OUTPUT_PATH']}")
-    print(f"🗄️ Database: {args['CATALOG_DATABASE']}")
+    print("Starting Time Series Analysis Job")
+    print(f"Input Path: {args['S3_INPUT_PATH']}")
+    print(f"Output Path: {args['S3_OUTPUT_PATH']}")
+    print(f"Database: {args['CATALOG_DATABASE']}")
     
     try:
         # Read transformed user data
-        print("📖 Reading transformed user data...")
+        print("Reading transformed user data...")
         full_table_name = f"glue_catalog.{args['CATALOG_DATABASE']}.users_transformed"
         
         try:
             users_df = spark.sql(f"SELECT * FROM {full_table_name}")
             print("✅ Successfully read from Iceberg table")
         except:
-            print("📖 Fallback: Reading from S3 Parquet files...")
+            print("Fallback: Reading from S3 Parquet files...")
             users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/users_transformed_parquet/")
         
-        print(f"📊 Input data count: {users_df.count()} records")
+        print(f"Input data count: {users_df.count()} records")
         
         # Create time series analyses
         print("\n🔄 Creating time series analyses...")
@@ -441,7 +441,7 @@ def main():
         save_to_iceberg_table(quality_trends, "fact_data_quality_trends", "append")
         
         # 5. Anomaly Detection
-        print("\n🚨 Performing anomaly detection...")
+        print("\nPerforming anomaly detection...")
         
         # Detect registration anomalies
         reg_anomalies = detect_anomalies(
@@ -455,7 +455,7 @@ def main():
         save_to_iceberg_table(quality_anomalies, "fact_quality_anomalies", "append")
         
         # Create summary report
-        print("\n📈 Time Series Analysis Summary:")
+        print("\nTime Series Analysis Summary:")
         print("=" * 60)
         
         # Registration trends summary
@@ -474,13 +474,13 @@ def main():
         
         # Quality trend summary
         quality_trends.orderBy(col("processing_date").desc()).limit(3).show()
-        print("Recent Data Quality Trends ☝️")
+        print("Recent Data Quality Trends")
         
         # Anomaly summary
         anomaly_count = reg_anomalies.filter(col("is_anomaly")).count()
         quality_anomaly_count = quality_anomalies.filter(col("is_anomaly")).count()
         
-        print(f"\n🚨 Anomalies Detected:")
+        print(f"\nAnomalies Detected:")
         print(f"   Registration Anomalies: {anomaly_count}")
         print(f"   Quality Anomalies: {quality_anomaly_count}")
         

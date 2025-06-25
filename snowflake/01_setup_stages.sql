@@ -5,7 +5,7 @@
 -- Environment variables will be substituted during CI/CD deployment
 
 -- Create storage integration for S3 access (Iceberg warehouse)
-CREATE STORAGE INTEGRATION IF NOT EXISTS s3_iceberg_integration
+CREATE STORAGE INTEGRATION iceberg_s3_integration
   TYPE = EXTERNAL_STAGE
   STORAGE_PROVIDER = 'S3'
   ENABLED = TRUE
@@ -16,21 +16,31 @@ CREATE STORAGE INTEGRATION IF NOT EXISTS s3_iceberg_integration
 -- Note: Run this manually to get the STORAGE_AWS_EXTERNAL_ID for your AWS role trust policy
 DESC STORAGE INTEGRATION s3_iceberg_integration;
 
--- Create stage for Iceberg tables
-CREATE STAGE IF NOT EXISTS iceberg_stage
-  STORAGE_INTEGRATION = s3_iceberg_integration
-  URL = 's3://${S3_BUCKET_NAME}/iceberg-warehouse/'
-  FILE_FORMAT = (TYPE = PARQUET);
+-- Create external volume and external catalog
 
--- Test the stage (uncomment to verify setup)
--- LIST @iceberg_stage;
+CREATE OR REPLACE EXTERNAL VOLUME ICEBERG_VOL
+   STORAGE_LOCATIONS =
+      (
+         (
+            NAME = 'iceberg-primary'
+            STORAGE_PROVIDER = 'S3'
+            STORAGE_BASE_URL = 's3://${S3_BUCKET_NAME}/iceberg-warehouse/'
+            STORAGE_AWS_ROLE_ARN = '${AWS_ROLE_ARN}'
+            STORAGE_AWS_EXTERNAL_ID = '${STORAGE_AWS_EXTERNAL_ID}'
+         )
+      )
+      ALLOW_WRITES = TRUE;
 
--- Snowflake Setup: Create Stages for S3 Parquet Files
--- This script sets up external stages to read Parquet files from S3
+-- Create catalog integration for AWS Glue
+CREATE OR REPLACE CATALOG INTEGRATION glue_catalog_integration
+  CATALOG_SOURCE = GLUE
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  TABLE_FORMAT = ICEBERG
+  ENABLED = TRUE
+  GLUE_AWS_ROLE_ARN = '${AWS_ROLE_ARN}'
+  GLUE_CATALOG_ID = '${AWS_ACCOUNT_ID}'
+  GLUE_REGION = '${AWS_REGION}';
 
--- Set AWS credentials (replace with your actual credentials)
--- You can also set these as Snowflake variables or use environment variables
--- Create database and schema if they don't exist
 
 CREATE DATABASE IF NOT EXISTS ECOMMERCE_DB;
 USE DATABASE ECOMMERCE_DB;

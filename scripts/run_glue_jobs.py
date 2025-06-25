@@ -21,8 +21,8 @@ def run_glue_job(job_name: str, job_parameters: dict):
     """Run a Glue job with parameters"""
     glue_client = get_glue_client()
     
-    print(f"🚀 Starting Glue job: {job_name}")
-    print(f"📋 Parameters: {json.dumps(job_parameters, indent=2)}")
+    print(f"Starting Glue job: {job_name}")
+    print(f"Parameters: {json.dumps(job_parameters, indent=2)}")
     
     try:
         response = glue_client.start_job_run(
@@ -44,7 +44,7 @@ def wait_for_job_completion(job_name: str, job_run_id: str, timeout_minutes: int
     """Wait for job completion"""
     glue_client = get_glue_client()
     
-    print(f"⏳ Waiting for job completion (timeout: {timeout_minutes} minutes)...")
+    print(f"Waiting for job completion (timeout: {timeout_minutes} minutes)...")
     
     start_time = time.time()
     timeout_seconds = timeout_minutes * 60
@@ -60,22 +60,22 @@ def wait_for_job_completion(job_name: str, job_run_id: str, timeout_minutes: int
             job_state = job_run['JobRunState']
             
             elapsed_time = int(time.time() - start_time)
-            print(f"⏰ Status: {job_state} (elapsed: {elapsed_time}s)")
+            print(f"Status: {job_state} (elapsed: {elapsed_time}s)")
             
             if job_state in ['SUCCEEDED', 'FAILED', 'STOPPED', 'TIMEOUT']:
                 if job_state == 'SUCCEEDED':
                     print(f"✅ Job completed successfully!")
                     if 'ExecutionTime' in job_run:
-                        print(f"⏱️ Execution Time: {job_run['ExecutionTime']} seconds")
+                        print(f"Execution Time: {job_run['ExecutionTime']} seconds")
                 else:
                     print(f"❌ Job failed with state: {job_state}")
                     if 'ErrorMessage' in job_run:
-                        print(f"💬 Error: {job_run['ErrorMessage']}")
+                        print(f"Error: {job_run['ErrorMessage']}")
                 
                 return job_state == 'SUCCEEDED'
             
             if elapsed_time > timeout_seconds:
-                print(f"⏰ Job timed out after {timeout_minutes} minutes")
+                print(f"Job timed out after {timeout_minutes} minutes")
                 return False
             
             time.sleep(30)  # Wait 30 seconds before checking again
@@ -86,7 +86,7 @@ def wait_for_job_completion(job_name: str, job_run_id: str, timeout_minutes: int
 
 def main():
     """Main function to run Glue jobs"""
-    print("🚀 Glue Jobs Runner")
+    print("Glue Jobs Runner")
     print("=" * 50)
     
     # Job parameters
@@ -117,7 +117,7 @@ def main():
         print(f"  {i}. {job['description']} ({job['name']})")
     
     # Ask user what to do
-    print(f"\n🤔 What would you like to do?")
+    print(f"\nWhat would you like to do?")
     print("1. Run all jobs in sequence")
     print("2. Run job 1 only (Raw Transformation)")
     print("3. Run job 2 only (Analytics Aggregation)")
@@ -128,10 +128,10 @@ def main():
         choice = input("\nEnter your choice (1-5): ").strip()
         
         if choice == '5':
-            print("👋 Goodbye!")
+            print("Goodbye!")
             return
         elif choice == '4':
-            print("\n📋 Job Parameters:")
+            print("\nJob Parameters:")
             print(json.dumps(job_params, indent=2))
             return
         elif choice in ['1', '2', '3']:
@@ -142,7 +142,7 @@ def main():
             else:  # choice == '3'
                 selected_jobs = [jobs_to_run[1]]
             
-            print(f"\n🚀 Running {len(selected_jobs)} job(s)...")
+            print(f"\nRunning {len(selected_jobs)} job(s)...")
             
             all_successful = True
             for i, job in enumerate(selected_jobs, 1):
@@ -169,8 +169,8 @@ def main():
             
             print(f"\n{'='*60}")
             if all_successful:
-                print("🎉 All jobs completed successfully!")
-                print("\n🔗 Next Steps:")
+                print("\t All jobs completed successfully!")
+                print("\n Next Steps:")
                 print("1. Check your S3 bucket for the Iceberg tables")
                 print("2. Verify tables in AWS Glue Data Catalog")
                 print("3. Try your Snowflake CREATE ICEBERG TABLE command")
@@ -182,7 +182,7 @@ def main():
             print("❌ Invalid choice. Please enter 1-5.")
             
     except KeyboardInterrupt:
-        print("\n\n👋 Operation cancelled by user.")
+        print("\n\nOperation cancelled by user.")
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
 

@@ -70,23 +70,23 @@ def extract_table_names_from_catalog_script():
 
 def main():
     """Main verification function"""
-    print("🔍 Verifying Table Names Consistency")
+    print("Verifying Table Names Consistency")
     print("=" * 50)
     
     # Extract table names from both scripts
     glue_tables = extract_table_names_from_glue_script()
     catalog_tables = extract_table_names_from_catalog_script()
     
-    print(f"\n📋 Glue Script Tables ({len(glue_tables)}):")
+    print(f"\nGlue Script Tables ({len(glue_tables)}):")
     for key, value in glue_tables.items():
         print(f"  • {key}: {value}")
     
-    print(f"\n📋 Catalog Script Tables ({len(catalog_tables)}):")
+    print(f"\nCatalog Script Tables ({len(catalog_tables)}):")
     for table in catalog_tables:
-        print(f"  • {table}")
+        print(f"  •{table}")
     
     # Check consistency
-    print(f"\n🔍 Consistency Check:")
+    print(f"\nConsistency Check:")
     
     # Check if all Glue tables exist in catalog
     missing_in_catalog = []

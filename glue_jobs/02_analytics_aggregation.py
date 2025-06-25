@@ -100,7 +100,7 @@ def create_geographic_analysis(df: DataFrame) -> DataFrame:
     """
     Create geographic analysis aggregations
     """
-    print("🌍 Creating geographic analysis...")
+    print("Creating geographic analysis...")
     
     # Country-level aggregations
     country_stats = df.groupBy("country", "processing_date").agg(
@@ -191,7 +191,7 @@ def create_age_generation_analysis(df: DataFrame) -> DataFrame:
     """
     Create age and generation analysis
     """
-    print("📊 Creating age and generation analysis...")
+    print("Creating age and generation analysis...")
     
     age_gen_analysis = df.groupBy("age_group", "generation", "gender", "processing_date").agg(
         count("*").alias("user_count"),
@@ -243,7 +243,7 @@ def create_email_communication_analysis(df: DataFrame) -> DataFrame:
     """
     Create email and communication preferences analysis
     """
-    print("📧 Creating email communication analysis...")
+    print("Creating email communication analysis...")
     
     # Email domain analysis
     email_domain_analysis = df.groupBy("email_domain", "email_provider_type", "processing_date").agg(
@@ -296,7 +296,7 @@ def create_data_quality_metrics(df: DataFrame) -> DataFrame:
     """
     Create comprehensive data quality metrics
     """
-    print("🔍 Creating data quality metrics...")
+    print("Creating data quality metrics...")
     
     # Overall quality metrics
     quality_metrics = df.agg(
@@ -357,7 +357,7 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
     """
     Save DataFrame to Iceberg table with proper configuration
     """
-    print(f"💾 Saving data to Iceberg table: {table_name}")
+    print(f"Saving data to Iceberg table: {table_name}")
     
     # Map table names to S3 locations to match catalog setup
     table_locations = {
@@ -397,13 +397,13 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
             writer.mode(write_mode).saveAsTable(full_table_name)
             
         print(f"✅ Successfully saved to Iceberg table: {full_table_name}")
-        print(f"📍 Location: {s3_location}")
+        print(f"Location: {s3_location}")
         
         # Show table statistics
         try:
             spark.sql(f"SELECT COUNT(*) as record_count FROM {full_table_name}").show()
         except:
-            print("ℹ️ Could not query table (normal for first run)")
+            print("Could not query table (normal for first run)")
             
     except Exception as e:
         print(f"❌ Error saving to Iceberg table: {str(e)}")
@@ -431,21 +431,21 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
             print(f"❌ Alternative method also failed: {str(e2)}")
             # Final fallback to Parquet
             fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
-            print(f"💾 Final fallback to Parquet at: {fallback_path}")
+            print(f"Final fallback to Parquet at: {fallback_path}")
             df.write.mode(write_mode).parquet(fallback_path)
 
 def main():
     """
     Main analytics aggregation pipeline
     """
-    print("🚀 Starting Advanced Analytics Aggregation Job")
-    print(f"📥 Input Path: {args['S3_INPUT_PATH']}")
-    print(f"📤 Output Path: {args['S3_OUTPUT_PATH']}")
-    print(f"🗄️ Database: {args['CATALOG_DATABASE']}")
+    print("Starting Advanced Analytics Aggregation Job")
+    print(f"Input Path: {args['S3_INPUT_PATH']}")
+    print(f"Output Path: {args['S3_OUTPUT_PATH']}")
+    print(f"Database: {args['CATALOG_DATABASE']}")
     
     try:
         # Read transformed user data
-        print("📖 Reading transformed user data...")
+        print("Reading transformed user data...")
         full_table_name = f"glue_catalog.{args['CATALOG_DATABASE']}.users_transformed"
         
         try:
@@ -454,10 +454,10 @@ def main():
             print("✅ Successfully read from Iceberg table")
         except:
             # Fallback to S3 Parquet files
-            print("📖 Fallback: Reading from S3 Parquet files...")
+            print("Fallback: Reading from S3 Parquet files...")
             users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_transformed_parquet/")
         
-        print(f"📊 Input data count: {users_df.count()} records")
+        print(f"Input data count: {users_df.count()} records")
         
         # Create analytics tables
         print("\n🔄 Creating analytics aggregations...")
@@ -485,7 +485,7 @@ def main():
         save_to_iceberg_table(quality_by_segment, "fact_quality_by_segment", "append")
         
         # Create summary report
-        print("\n📈 Analytics Summary Report:")
+        print("\nAnalytics Summary Report:")
         print("=" * 50)
         
         demographics_dim.groupBy("target_segment").count().show()

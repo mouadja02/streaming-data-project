@@ -4,3 +4,4 @@ venv
 output
 tmp
 dbt_*
+*.bkp

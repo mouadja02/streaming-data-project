@@ -23,7 +23,7 @@ def check_s3_path(s3_client, bucket, prefix):
         if 'Contents' in response:
             print(f"✅ Found {len(response['Contents'])} objects at s3://{bucket}/{prefix}")
             for obj in response['Contents'][:5]:  # Show first 5 objects
-                print(f"   📄 {obj['Key']} ({obj['Size']} bytes)")
+                print(f"   {obj['Key']} ({obj['Size']} bytes)")
             if len(response['Contents']) > 5:
                 print(f"   ... and {len(response['Contents']) - 5} more objects")
             return True
@@ -37,7 +37,7 @@ def check_s3_path(s3_client, bucket, prefix):
 
 def main():
     """Check Iceberg metadata for key tables"""
-    print("🔍 Checking Iceberg Metadata in S3")
+    print("Checking Iceberg Metadata in S3")
     print("=" * 50)
     
     s3_client = boto3.client('s3')
@@ -52,14 +52,14 @@ def main():
         'fact_geographic_analysis_parquet'
     ]
     
-    print(f"\n📦 Checking bucket: {bucket}")
-    print(f"🏠 Base path: iceberg-warehouse/")
+    print(f"\n Checking bucket: {bucket}")
+    print(f"Base path: iceberg-warehouse/")
     
     all_good = True
     
     for table in tables_to_check:
-        print(f"\n🔍 Checking table: {table}")
-        
+        print(f"\nChecking table: {table}")
+
         # Check data files
         data_path = f"iceberg-warehouse/{table}/"
         has_data = check_s3_path(s3_client, bucket, data_path)
@@ -79,10 +79,10 @@ def main():
     
     print("\n" + "=" * 50)
     if all_good:
-        print("🎉 All tables have proper Iceberg metadata!")
+        print("All tables have proper Iceberg metadata!")
     else:
         print("⚠️ Some tables are missing metadata. You need to run Glue jobs first.")
-        print("\n💡 Solution:")
+        print("\n Solution:")
         print("1. Run your Glue job: data-pipeline-raw-transformation")
         print("2. This will create the proper Iceberg metadata files")
         print("3. Then Snowflake can read the table properly")

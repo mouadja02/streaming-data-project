@@ -1,5 +1,5 @@
--- Sample Analytics Queries for Pipeline Data
--- This script demonstrates various analytical queries on the external tables
+-- Sample Analytics Queries for Pipeline Data in order to check the RAW data stored in s3
+-- This script demonstrates various analytical queries on the external tables that allow detecting any anomalies in the data
 
 USE DATABASE ECOMMERCE_DB;
 USE SCHEMA BRONZE_LAYER;
