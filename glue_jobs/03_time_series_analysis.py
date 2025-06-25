@@ -40,6 +40,13 @@ args = getResolvedOptions(sys.argv, [
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
+
+# Configure Spark for Iceberg
+spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", args['S3_OUTPUT_PATH'])
+spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
@@ -378,27 +385,84 @@ def detect_anomalies(df: DataFrame, metric_col: str, threshold_multiplier: float
     return anomaly_df
 
 def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "append"):
-    """Save DataFrame to Iceberg table"""
-    print(f"💾 Saving data to Iceberg table: {table_name}")
+    """
+    Save DataFrame to Iceberg table with proper configuration
+    """
+    print(f"Saving data to Iceberg table: {table_name}")
+    
+    # Map table names to S3 locations to match catalog setup
+    table_locations = {
+        "fact_registration_trends": f"{args['S3_OUTPUT_PATH']}/fact_registration_trends_parquet/",
+        "fact_geographic_expansion": f"{args['S3_OUTPUT_PATH']}/fact_geographic_expansion_parquet/",
+        "fact_age_demographic_trends": f"{args['S3_OUTPUT_PATH']}/fact_age_demographic_trends_parquet/",
+        "fact_data_quality_trends": f"{args['S3_OUTPUT_PATH']}/fact_data_quality_trends_parquet/",
+        "fact_registration_anomalies": f"{args['S3_OUTPUT_PATH']}/fact_registration_anomalies_parquet/",
+        "fact_quality_anomalies": f"{args['S3_OUTPUT_PATH']}/fact_quality_anomalies_parquet/"
+    }
+    
+    # Get the S3 location for this table
+    s3_location = table_locations.get(table_name, f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/")
     
     full_table_name = f"glue_catalog.{args['CATALOG_DATABASE']}.{table_name}"
     
     try:
-        df.writeTo(full_table_name).using("iceberg").mode(write_mode).save()
+        # Configure Iceberg table properties
+        iceberg_options = {
+            "path": s3_location,
+            "catalog-name": "glue_catalog",
+            "warehouse": args['S3_OUTPUT_PATH'],
+            "write.format.default": "parquet",
+            "write.parquet.compression-codec": "snappy"
+        }
+        
+        # Write to Iceberg table with explicit location
+        writer = df.write.format("iceberg")
+        for key, value in iceberg_options.items():
+            writer = writer.option(key, value)
+        
+        # For SCD tables, use overwrite for dimensions
+        if "dim_" in table_name and write_mode == "merge":
+            writer.mode("overwrite").saveAsTable(full_table_name)
+        else:
+            writer.mode(write_mode).saveAsTable(full_table_name)
+            
         print(f"✅ Successfully saved to Iceberg table: {full_table_name}")
+        print(f"Location: {s3_location}")
         
         # Show table statistics
         try:
             spark.sql(f"SELECT COUNT(*) as record_count FROM {full_table_name}").show()
         except:
-            pass
+            print("Could not query table (normal for first run)")
             
     except Exception as e:
         print(f"❌ Error saving to Iceberg table: {str(e)}")
-        # Fallback to Parquet
-        fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
-        print(f"Falling back to Parquet at: {fallback_path}")
-        df.write.mode(write_mode).parquet(fallback_path)
+        print(f"🔄 Attempting alternative Iceberg write method...")
+        
+        try:
+            # Alternative method: Create table first, then insert
+            df.createOrReplaceTempView("temp_insert_view")
+            
+            spark.sql(f"""
+                CREATE TABLE IF NOT EXISTS {full_table_name}
+                USING ICEBERG
+                LOCATION '{s3_location}'
+                AS SELECT * FROM temp_insert_view WHERE 1=0
+            """)
+            
+            # Insert data
+            if write_mode == "overwrite" or ("dim_" in table_name and write_mode == "merge"):
+                spark.sql(f"DELETE FROM {full_table_name}")
+            spark.sql(f"INSERT INTO {full_table_name} SELECT * FROM temp_insert_view")
+            
+            print(f"✅ Successfully saved using alternative method")
+            
+        except Exception as e2:
+            print(f"❌ Alternative method also failed: {str(e2)}")
+            # Final fallback to Parquet
+            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
+            print(f"Final fallback to Parquet at: {fallback_path}")
+            df.write.mode(write_mode).parquet(fallback_path)
 
 def main():
     """Main time series analysis pipeline"""
@@ -416,8 +480,9 @@ def main():
             users_df = spark.sql(f"SELECT * FROM {full_table_name}")
             print("✅ Successfully read from Iceberg table")
         except:
+            # Fallback to S3 Parquet files
             print("Fallback: Reading from S3 Parquet files...")
-            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_cleaned_transformed_parquet/data/")
+            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_transformed_parquet/")
         
         print(f"Input data count: {users_df.count()} records")
         
