@@ -403,7 +403,6 @@ jobs:
         du -h generated_sql/${{ steps.env.outputs.environment }}/*
         
     - name: Commit generated files to repository
-      if: github.event.inputs.commit_generated_files == 'true'
       run: |
         ENV="${{ steps.env.outputs.environment }}"
         echo "Committing generated SQL files for ${ENV} environment..."
