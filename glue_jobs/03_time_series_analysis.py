@@ -181,7 +181,7 @@ def create_registration_trends(df: DataFrame) -> DataFrame:
         "growth_rate",
         when(col("previous_registrations").isNotNull() & (col("previous_registrations") > 0),
              round((col("registrations") - col("previous_registrations")) * 100.0 / col("previous_registrations"), 2))
-        .otherwise(null())
+        .otherwise(lit(None).cast(DoubleType()))
     ).withColumn(
         "created_at", current_timestamp()
     )
@@ -417,7 +417,7 @@ def main():
             print("✅ Successfully read from Iceberg table")
         except:
             print("Fallback: Reading from S3 Parquet files...")
-            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/users_transformed_parquet/")
+            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_cleaned_transformed_parquet/data/")
         
         print(f"Input data count: {users_df.count()} records")
         

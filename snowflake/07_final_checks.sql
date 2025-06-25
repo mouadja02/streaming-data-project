@@ -21,6 +21,28 @@ SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_DATA_QUALITY_DISTRIBUTION;
 SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_EMAIL_PROVIDER_MARKET_SHARE;
 
 -- -------------------------------------------------------------------------
+-- TIME SERIES ANALYSIS VIEWS EXAMPLES
+-- -------------------------------------------------------------------------
+
+-- Check monthly registration trends
+SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_MONTHLY_REGISTRATION_TRENDS LIMIT 12;
+
+-- View quarterly performance
+SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_QUARTERLY_REGISTRATION_PERFORMANCE;
+
+-- Check day of week patterns
+SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_REGISTRATION_DAY_PATTERNS;
+
+-- View top growing countries
+SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_TOP_GROWING_COUNTRIES LIMIT 10;
+
+-- Check data quality trends
+SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_DATA_QUALITY_TREND_OVERVIEW LIMIT 10;
+
+-- View anomaly alerts
+SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_ANOMALY_ALERT_DASHBOARD;
+
+-- -------------------------------------------------------------------------
 -- ADVANCED ANALYTICS COMBINATIONS
 -- -------------------------------------------------------------------------
 
@@ -70,6 +92,44 @@ FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_EMAIL_PROVIDER_MARKET_SHARE emp
 JOIN ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_EMAIL_PROVIDER_AGE_DEMOGRAPHICS age_demo
     ON emp.email_provider_type = age_demo.email_provider_type
 ORDER BY emp.market_share_pct DESC;
+
+-- Time series executive dashboard insights
+SELECT 
+    ts.metric_category,
+    ts.metric_type,
+    ts.period,
+    ts.value,
+    ts.growth_rate,
+    ts.processing_date
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_TIME_SERIES_EXECUTIVE_DASHBOARD ts
+ORDER BY ts.processing_date DESC, ts.growth_rate DESC
+LIMIT 20;
+
+-- Geographic expansion insights by category
+SELECT 
+    expansion_category,
+    countries_in_category,
+    total_users,
+    avg_acquisition_rate,
+    avg_market_share,
+    earliest_entry_date,
+    latest_entry_date
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_GEOGRAPHIC_EXPANSION_INSIGHTS
+ORDER BY total_users DESC;
+
+-- Age demographic trends analysis
+SELECT 
+    age_group,
+    generation,
+    registration_year,
+    trend_direction,
+    trend_intensity,
+    trend_magnitude,
+    total_users_in_group
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_AGE_GROUP_TRENDS
+WHERE trend_direction IN ('Growing', 'Rapidly Growing')
+ORDER BY trend_magnitude DESC
+LIMIT 15;
 
 -- -------------------------------------------------------------------------
 -- BUSINESS INTELLIGENCE QUERIES
@@ -163,6 +223,46 @@ LEFT JOIN ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_ENGAGEMENT_BY_GENERATION eng
 GROUP BY age.age_group, age.total_users, eng.segment_count, eng.avg_business_email_pct
 ORDER BY engagement_rate_pct DESC NULLS LAST;
 
+-- Monthly business performance summary
+SELECT 
+    month,
+    new_registrations,
+    registration_growth_rate,
+    countries_active,
+    avg_new_user_age,
+    data_quality_score,
+    quality_direction,
+    overall_performance
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_MONTHLY_BUSINESS_SUMMARY
+ORDER BY month DESC
+LIMIT 12;
+
+-- Country expansion timeline analysis
+SELECT 
+    country,
+    first_user_date,
+    expansion_year,
+    expansion_month,
+    user_count,
+    expansion_category,
+    country_rank_in_year
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_COUNTRY_EXPANSION_TIMELINE
+ORDER BY first_user_date DESC
+LIMIT 20;
+
+-- Generation performance analysis
+SELECT 
+    generation,
+    registration_year,
+    total_generation_users,
+    avg_percentage_of_year,
+    age_groups_represented,
+    avg_data_quality,
+    total_countries_reached
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_GENERATION_PERFORMANCE_TIMELINE
+ORDER BY registration_year DESC, total_generation_users DESC
+LIMIT 15;
+
 -- -------------------------------------------------------------------------
 -- MONITORING AND ALERTING QUERIES
 -- -------------------------------------------------------------------------
@@ -209,15 +309,225 @@ SELECT
 FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_BRONZE_VS_SILVER_COMPLETENESS;
 
 -- -------------------------------------------------------------------------
+-- TIME SERIES ANOMALY MONITORING
+-- -------------------------------------------------------------------------
+
+-- Registration anomalies alert check
+SELECT 
+    'REGISTRATION_ANOMALY' as alert_type,
+    period_type,
+    time_period,
+    registrations,
+    z_score,
+    anomaly_severity,
+    action_required,
+    processing_date
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_REGISTRATION_ANOMALIES_SUMMARY
+WHERE anomaly_severity IN ('Critical', 'High')
+ORDER BY z_score DESC, processing_date DESC;
+
+-- Quality anomalies alert check
+SELECT 
+    'QUALITY_ANOMALY' as alert_type,
+    processing_date,
+    avg_quality_score,
+    z_score,
+    anomaly_severity,
+    quality_status,
+    total_records
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_QUALITY_ANOMALIES_SUMMARY
+WHERE anomaly_severity IN ('Critical', 'High')
+ORDER BY z_score DESC, processing_date DESC;
+
+-- Quality improvement tracking alert
+SELECT 
+    'QUALITY_TREND_ALERT' as alert_type,
+    processing_date,
+    quality_trend,
+    change_direction,
+    change_magnitude,
+    high_quality_percentage,
+    CASE 
+        WHEN change_direction = 'Negative' AND change_magnitude > 5 THEN 'CRITICAL_DECLINE'
+        WHEN change_direction = 'Negative' AND change_magnitude > 2 THEN 'MODERATE_DECLINE'
+        WHEN change_direction = 'Positive' AND change_magnitude > 5 THEN 'SIGNIFICANT_IMPROVEMENT'
+        ELSE 'NORMAL_VARIATION'
+    END as trend_alert_level
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_QUALITY_IMPROVEMENT_TRACKING
+WHERE change_direction != 'Neutral'
+ORDER BY processing_date DESC, change_magnitude DESC
+LIMIT 10;
+
+-- Growth rate monitoring
+SELECT 
+    'GROWTH_RATE_ALERT' as alert_type,
+    time_period,
+    registrations,
+    growth_rate,
+    growth_category,
+    CASE 
+        WHEN growth_rate < -20 THEN 'CRITICAL_DECLINE'
+        WHEN growth_rate < -10 THEN 'MODERATE_DECLINE'
+        WHEN growth_rate > 50 THEN 'EXCEPTIONAL_GROWTH'
+        WHEN growth_rate > 20 THEN 'HIGH_GROWTH'
+        ELSE 'NORMAL_GROWTH'
+    END as growth_alert_level
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_MONTHLY_REGISTRATION_TRENDS
+WHERE ABS(growth_rate) > 10 OR growth_rate IS NULL
+ORDER BY processing_date DESC, ABS(growth_rate) DESC
+LIMIT 15;
+
+-- -------------------------------------------------------------------------
+-- ADVANCED TIME SERIES ANALYTICS
+-- -------------------------------------------------------------------------
+
+-- Cross-analysis: Registration trends vs Quality trends
+SELECT 
+    rt.time_period as month,
+    rt.registrations,
+    rt.growth_rate as registration_growth,
+    qt.avg_quality_score,
+    qt.quality_change,
+    qt.quality_trend,
+    CASE 
+        WHEN rt.growth_rate > 0 AND qt.quality_change > 0 THEN 'Growth with Quality Improvement'
+        WHEN rt.growth_rate > 0 AND qt.quality_change < 0 THEN 'Growth with Quality Decline'
+        WHEN rt.growth_rate < 0 AND qt.quality_change > 0 THEN 'Decline with Quality Improvement'
+        WHEN rt.growth_rate < 0 AND qt.quality_change < 0 THEN 'Decline with Quality Decline'
+        ELSE 'Mixed or Stable'
+    END as combined_trend_analysis
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_MONTHLY_REGISTRATION_TRENDS rt
+LEFT JOIN ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_DATA_QUALITY_TREND_OVERVIEW qt
+    ON rt.processing_date = qt.processing_date
+ORDER BY rt.time_period DESC
+LIMIT 12;
+
+-- Fastest growing demographics with expansion correlation
+SELECT 
+    demo.age_group,
+    demo.generation,
+    demo.trend_magnitude,
+    demo.total_users_in_group,
+    geo.expansion_category,
+    geo.avg_acquisition_rate,
+    geo.total_users as geo_total_users
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_FASTEST_GROWING_DEMOGRAPHICS demo
+LEFT JOIN ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_GEOGRAPHIC_EXPANSION_INSIGHTS geo
+    ON demo.processing_date = geo.processing_date
+WHERE demo.growth_rank <= 5
+ORDER BY demo.trend_magnitude DESC;
+
+-- Market penetration vs registration patterns
+SELECT 
+    geo.expansion_category,
+    geo.countries_in_category,
+    geo.total_users,
+    patterns.day_name,
+    patterns.registrations as day_registrations,
+    patterns.percentage_of_weekly_registrations
+FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_MARKET_PENETRATION_ANALYSIS geo
+CROSS JOIN ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_REGISTRATION_DAY_PATTERNS patterns
+WHERE patterns.popularity_rank <= 3
+ORDER BY geo.total_users DESC, patterns.percentage_of_weekly_registrations DESC;
+
+-- -------------------------------------------------------------------------
+-- COMPREHENSIVE HEALTH CHECK DASHBOARD
+-- -------------------------------------------------------------------------
+
+-- Overall pipeline health summary
+SELECT 
+    'Pipeline Health Check' as report_type,
+    COUNT(DISTINCT rt.time_period) as months_with_data,
+    AVG(rt.registrations) as avg_monthly_registrations,
+    AVG(rt.growth_rate) as avg_growth_rate,
+    COUNT(DISTINCT ge.country) as countries_active,
+    AVG(qt.avg_quality_score) as avg_quality_score,
+    COUNT(CASE WHEN ra.is_anomaly THEN 1 END) as registration_anomalies,
+    COUNT(CASE WHEN qa.is_anomaly THEN 1 END) as quality_anomalies,
+    CURRENT_TIMESTAMP() as report_generated_at
+FROM ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_REGISTRATION_TRENDS rt
+LEFT JOIN ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_GEOGRAPHIC_EXPANSION ge
+    ON rt.processing_date = ge.processing_date
+LEFT JOIN ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_DATA_QUALITY_TRENDS qt
+    ON rt.processing_date = qt.processing_date
+LEFT JOIN ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_REGISTRATION_ANOMALIES ra
+    ON rt.processing_date = ra.processing_date AND ra.is_anomaly = TRUE
+LEFT JOIN ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_QUALITY_ANOMALIES qa
+    ON rt.processing_date = qa.processing_date AND qa.is_anomaly = TRUE
+WHERE rt.period_type = 'monthly';
+
+-- Time series data completeness check
+SELECT 
+    'Time Series Completeness' as check_type,
+    'Registration Trends' as table_name,
+    COUNT(*) as total_records,
+    COUNT(DISTINCT processing_date) as unique_dates,
+    MIN(processing_date) as earliest_date,
+    MAX(processing_date) as latest_date
+FROM ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_REGISTRATION_TRENDS
+
+UNION ALL
+
+SELECT 
+    'Time Series Completeness',
+    'Geographic Expansion',
+    COUNT(*),
+    COUNT(DISTINCT processing_date),
+    MIN(processing_date),
+    MAX(processing_date)
+FROM ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_GEOGRAPHIC_EXPANSION
+
+UNION ALL
+
+SELECT 
+    'Time Series Completeness',
+    'Age Demographic Trends',
+    COUNT(*),
+    COUNT(DISTINCT processing_date),
+    MIN(processing_date),
+    MAX(processing_date)
+FROM ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_AGE_DEMOGRAPHIC_TRENDS
+
+UNION ALL
+
+SELECT 
+    'Time Series Completeness',
+    'Data Quality Trends',
+    COUNT(*),
+    COUNT(DISTINCT processing_date),
+    MIN(processing_date),
+    MAX(processing_date)
+FROM ${SNOWFLAKE_DATABASE}.SILVER_LAYER.FACT_DATA_QUALITY_TRENDS
+
+ORDER BY table_name;
+
+-- -------------------------------------------------------------------------
 -- VIEW MANAGEMENT QUERIES
 -- -------------------------------------------------------------------------
 
 -- List all Gold Layer views
 SHOW VIEWS IN SCHEMA ${SNOWFLAKE_DATABASE}.GOLD_LAYER;
 
+-- Count of views by category
+SELECT 
+    CASE 
+        WHEN "name" LIKE '%REGISTRATION%' THEN 'Registration Analysis'
+        WHEN "name" LIKE '%GEOGRAPHIC%' OR "name" LIKE '%COUNTRY%' THEN 'Geographic Analysis'
+        WHEN "name" LIKE '%AGE%' OR "name" LIKE '%DEMOGRAPHIC%' OR "name" LIKE '%GENERATION%' THEN 'Demographic Analysis'
+        WHEN "name" LIKE '%QUALITY%' THEN 'Quality Analysis'
+        WHEN "name" LIKE '%ANOMAL%' THEN 'Anomaly Detection'
+        WHEN "name" LIKE '%EXECUTIVE%' OR "name" LIKE '%DASHBOARD%' OR "name" LIKE '%SUMMARY%' THEN 'Executive Dashboards'
+        WHEN "name" LIKE '%EMAIL%' THEN 'Email Analysis'
+        ELSE 'Other Analytics'
+    END as view_category,
+    COUNT(*) as view_count
+FROM (SHOW VIEWS IN SCHEMA ${SNOWFLAKE_DATABASE}.GOLD_LAYER)
+GROUP BY view_category
+ORDER BY view_count DESC;
+
 -- Get view definitions (useful for documentation)
--- Note: Replace 'VW_BRONZE_USER_OVERVIEW' with any specific view name
--- SHOW CREATE VIEW ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_BRONZE_USER_OVERVIEW;
+-- Note: Replace view name as needed
+-- SHOW CREATE VIEW ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_TIME_SERIES_EXECUTIVE_DASHBOARD;
 
 -- Check view dependencies
 -- SELECT * FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE 

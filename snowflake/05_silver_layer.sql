@@ -123,3 +123,91 @@ CREATE OR REPLACE ICEBERG TABLE fact_quality_by_segment
   COMMENT = 'Quality by Segment Fact Table';
 
 select * from fact_quality_by_segment;
+
+-- =========================================================================
+-- TIME SERIES ANALYSIS TABLES (JOB 3)
+-- =========================================================================
+
+-- -------------------------------------------------------------------------
+-- Registration Trends Fact Table (Iceberg Table)
+-- -------------------------------------------------------------------------
+
+CREATE OR REPLACE ICEBERG TABLE fact_registration_trends
+  EXTERNAL_VOLUME = 'iceberg_vol'
+  CATALOG = 'glue_catalog_integration'
+  CATALOG_TABLE_NAME = 'fact_registration_trends'
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  AUTO_REFRESH = TRUE
+  COMMENT = 'Registration trends with time-based analysis (monthly, quarterly, day of week)';
+
+select * from fact_registration_trends;
+
+-- -------------------------------------------------------------------------
+-- Geographic Expansion Trends Fact Table (Iceberg Table)
+-- -------------------------------------------------------------------------
+
+CREATE OR REPLACE ICEBERG TABLE fact_geographic_expansion
+  EXTERNAL_VOLUME = 'iceberg_vol'
+  CATALOG = 'glue_catalog_integration'
+  CATALOG_TABLE_NAME = 'fact_geographic_expansion'
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  AUTO_REFRESH = TRUE
+  COMMENT = 'Geographic expansion patterns and country penetration metrics';
+
+select * from fact_geographic_expansion;
+
+-- -------------------------------------------------------------------------
+-- Age Demographic Trends Fact Table (Iceberg Table)
+-- -------------------------------------------------------------------------
+
+CREATE OR REPLACE ICEBERG TABLE fact_age_demographic_trends
+  EXTERNAL_VOLUME = 'iceberg_vol'
+  CATALOG = 'glue_catalog_integration'
+  CATALOG_TABLE_NAME = 'fact_age_demographic_trends'
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  AUTO_REFRESH = TRUE
+  COMMENT = 'Age demographic trends over time with trend direction analysis';
+
+select * from fact_age_demographic_trends;
+
+-- -------------------------------------------------------------------------
+-- Data Quality Trends Fact Table (Iceberg Table)
+-- -------------------------------------------------------------------------
+
+CREATE OR REPLACE ICEBERG TABLE fact_data_quality_trends
+  EXTERNAL_VOLUME = 'iceberg_vol'
+  CATALOG = 'glue_catalog_integration'
+  CATALOG_TABLE_NAME = 'fact_data_quality_trends'
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  AUTO_REFRESH = TRUE
+  COMMENT = 'Data quality trends over time with quality change analysis';
+
+select * from fact_data_quality_trends;
+
+-- -------------------------------------------------------------------------
+-- Registration Anomalies Fact Table (Iceberg Table)
+-- -------------------------------------------------------------------------
+
+CREATE OR REPLACE ICEBERG TABLE fact_registration_anomalies
+  EXTERNAL_VOLUME = 'iceberg_vol'
+  CATALOG = 'glue_catalog_integration'
+  CATALOG_TABLE_NAME = 'fact_registration_anomalies'
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  AUTO_REFRESH = TRUE
+  COMMENT = 'Registration anomalies detection with statistical analysis';
+
+select * from fact_registration_anomalies;
+
+-- -------------------------------------------------------------------------
+-- Quality Anomalies Fact Table (Iceberg Table)
+-- -------------------------------------------------------------------------
+
+CREATE OR REPLACE ICEBERG TABLE fact_quality_anomalies
+  EXTERNAL_VOLUME = 'iceberg_vol'
+  CATALOG = 'glue_catalog_integration'
+  CATALOG_TABLE_NAME = 'fact_quality_anomalies'
+  CATALOG_NAMESPACE = 'data_pipeline_db'
+  AUTO_REFRESH = TRUE
+  COMMENT = 'Data quality anomalies detection with z-score analysis';
+
+select * from fact_quality_anomalies;
