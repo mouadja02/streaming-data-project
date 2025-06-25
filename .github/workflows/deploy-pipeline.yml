@@ -214,6 +214,7 @@ jobs:
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
             "--CATALOG_TABLE": "users_cleaned",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
             "--datalake-formats": "iceberg"
           },
           "MaxRetries": 0,
@@ -260,6 +261,7 @@ jobs:
             "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
             "--datalake-formats": "iceberg"
           },
           "MaxRetries": 0,
@@ -306,6 +308,7 @@ jobs:
             "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
             "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
             "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
             "--datalake-formats": "iceberg"
           },
           "MaxRetries": 0,

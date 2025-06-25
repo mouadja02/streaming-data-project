@@ -42,7 +42,6 @@ glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 
 # Configure Spark for Iceberg
-spark.conf.set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
 spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", args['S3_OUTPUT_PATH'])
 spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
