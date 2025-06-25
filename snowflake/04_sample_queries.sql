@@ -2,7 +2,7 @@
 -- This script demonstrates various analytical queries on the external tables
 
 USE DATABASE ECOMMERCE_DB;
-USE SCHEMA STAGING;
+USE SCHEMA BRONZE_LAYER;
 
 -- =====================================================
 -- BASIC DATA EXPLORATION

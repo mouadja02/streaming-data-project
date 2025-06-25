@@ -2,7 +2,7 @@
 -- This script creates reusable file formats for different data types
 
 USE DATABASE ECOMMERCE_DB;
-USE SCHEMA STAGING;
+USE SCHEMA BRONZE_LAYER;
 
 -- Standard Parquet format with Snappy compression
 CREATE FILE FORMAT IF NOT EXISTS parquet_format
