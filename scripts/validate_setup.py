@@ -3,7 +3,6 @@
 """
 Setup Validation Script
 =======================
-
 This script validates that all required configurations are in place
 for the CI/CD pipeline deployment.
 """
@@ -18,13 +17,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 def check_file_exists(file_path: str) -> bool:
-    """Check if a file exists"""
     return Path(file_path).exists()
 
 def check_env_variables() -> Dict[str, Any]:
-    """Check if required environment variables are set"""
     print("🔍 Checking environment variables...")
     
     required_vars = {
@@ -51,45 +47,43 @@ def check_env_variables() -> Dict[str, Any]:
             value = os.getenv(var)
             results[category][var] = {
                 'set': value is not None,
-                'value': '***' if value and 'PASSWORD' in var or 'KEY' in var else value
+                'value': '***' if value and ('PASSWORD' in var or 'KEY' in var) else value
             }
     
     return results
 
 def check_aws_connectivity() -> Dict[str, Any]:
-    """Check AWS connectivity and permissions"""
     print("☁️ Checking AWS connectivity...")
     
     try:
-        # Test S3 access
         s3_client = boto3.client('s3')
         bucket_name = os.getenv('S3_BUCKET_NAME')
         
         if not bucket_name:
             return {'error': 'S3_BUCKET_NAME environment variable not set'}
         
-        # Check if bucket exists and is accessible
         try:
             s3_client.head_bucket(Bucket=bucket_name)
             bucket_accessible = True
+            bucket_error = None
         except Exception as e:
             bucket_accessible = False
             bucket_error = str(e)
         
-        # Test Glue access
         try:
             glue_client = boto3.client('glue')
             glue_client.get_databases()
             glue_accessible = True
+            glue_error = None
         except Exception as e:
             glue_accessible = False
             glue_error = str(e)
         
-        # Test IAM access
         try:
             iam_client = boto3.client('iam')
             iam_client.get_user()
             iam_accessible = True
+            iam_error = None
         except Exception as e:
             iam_accessible = False
             iam_error = str(e)
@@ -98,15 +92,15 @@ def check_aws_connectivity() -> Dict[str, Any]:
             's3': {
                 'accessible': bucket_accessible,
                 'bucket': bucket_name,
-                'error': bucket_error if not bucket_accessible else None
+                'error': bucket_error
             },
             'glue': {
                 'accessible': glue_accessible,
-                'error': glue_error if not glue_accessible else None
+                'error': glue_error
             },
             'iam': {
                 'accessible': iam_accessible,
-                'error': iam_error if not iam_accessible else None
+                'error': iam_error
             }
         }
         
@@ -114,7 +108,6 @@ def check_aws_connectivity() -> Dict[str, Any]:
         return {'error': f'AWS configuration error: {str(e)}'}
 
 def check_snowflake_connectivity() -> Dict[str, Any]:
-    """Check Snowflake connectivity"""
     print("🏔️ Checking Snowflake connectivity...")
     
     try:
@@ -129,12 +122,10 @@ def check_snowflake_connectivity() -> Dict[str, Any]:
             'schema': os.getenv('SNOWFLAKE_SCHEMA')
         }
         
-        # Check if all parameters are set
         missing_params = [key for key, value in conn_params.items() if not value]
         if missing_params:
             return {'error': f'Missing Snowflake parameters: {missing_params}'}
         
-        # Test connection
         try:
             conn = snowflake.connector.connect(**conn_params)
             cursor = conn.cursor()
@@ -160,26 +151,21 @@ def check_snowflake_connectivity() -> Dict[str, Any]:
         return {'error': 'snowflake-connector-python not installed'}
 
 def check_required_files() -> Dict[str, bool]:
-    """Check if all required files exist"""
     print("📁 Checking required files...")
     
     required_files = [
-        # Glue job scripts
         'glue_jobs/01_raw_data_transformation.py',
         'glue_jobs/02_analytics_aggregation.py',
         'glue_jobs/03_time_series_analysis.py',
-        
-        # Snowflake scripts
         'snowflake/01_setup_stages.sql',
         'snowflake/02_create_file_formats.sql',
-        'snowflake/03_create_external_tables.sql',
-        'snowflake/04_sample_queries.sql',
-        
-        # Configuration files
+        'snowflake/03_bronze_layer.sql',
+        'snowflake/04_bronze_checks.sql',
+        'snowflake/05_silver_layer.sql',
+        'snowflake/06_create_gold_views.sql',
+        'snowflake/07_final_checks.sql',
         'snowflake_connector.py',
         '.github/workflows/deploy-pipeline.yml',
-        
-        # Documentation
         'docs/CICD_SETUP.md'
     ]
     
@@ -190,108 +176,118 @@ def check_required_files() -> Dict[str, bool]:
     return results
 
 def generate_github_secrets_template() -> str:
-    """Generate a template for GitHub secrets"""
     template = """
 # GitHub Secrets Configuration Template
 # ====================================
-# Copy these to your GitHub repository secrets
 
 # AWS Credentials
 AWS_ACCESS_KEY_ID=your_aws_access_key_here
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
-S3_BUCKET_NAME=your-s3-bucket-name
+S3_BUCKET_NAME=your_s3_bucket_name
+AWS_REGION=us-east-1
 
-# Snowflake Credentials  
-SNOWFLAKE_USER=INTERNPROJECT
+# Snowflake Credentials
+SNOWFLAKE_USER=your_snowflake_user
 SNOWFLAKE_PASSWORD=your_snowflake_password
-SNOWFLAKE_ACCOUNT=your_account-INTERNPROJECT
-SNOWFLAKE_WAREHOUSE=INT_WH
-SNOWFLAKE_DATABASE=ECOMMERCE_DB
-SNOWFLAKE_SCHEMA=BRONZE_LAYER
-
-# Instructions:
-# 1. Go to your GitHub repository
-# 2. Navigate to Settings → Secrets and variables → Actions
-# 3. Click "New repository secret" 
-# 4. Add each secret above with the actual values
+SNOWFLAKE_ACCOUNT=your_snowflake_account
+SNOWFLAKE_WAREHOUSE=your_warehouse
+SNOWFLAKE_DATABASE=your_database
+SNOWFLAKE_SCHEMA=your_schema
 """
-    return template
+    return template.strip()
 
-def main():
-    """Main validation function"""
-    print("Data Pipeline Setup Validation")
-    print("=" * 50)
+def print_validation_results(results: Dict[str, Any]):
+    print("\n" + "="*60)
+    print("VALIDATION RESULTS")
+    print("="*60)
     
-    all_checks_passed = True
-    
-    # Check environment variables
-    env_results = check_env_variables()
+    # Environment Variables
     print("\n📋 Environment Variables:")
+    env_results = results.get('env_variables', {})
     for category, vars_dict in env_results.items():
         print(f"\n  {category}:")
         for var, info in vars_dict.items():
             status = "✅" if info['set'] else "❌"
-            print(f"    {status} {var}: {info['value'] if info['set'] else 'NOT SET'}")
-            if not info['set']:
-                all_checks_passed = False
+            value = info['value'] if info['set'] else "Not set"
+            print(f"    {status} {var}: {value}")
     
-    # Check required files
-    print("\nRequired Files:")
-    file_results = check_required_files()
+    # AWS Connectivity
+    print("\n☁️ AWS Connectivity:")
+    aws_results = results.get('aws_connectivity', {})
+    if 'error' in aws_results:
+        print(f"  ❌ {aws_results['error']}")
+    else:
+        for service, info in aws_results.items():
+            status = "✅" if info['accessible'] else "❌"
+            print(f"  {status} {service.upper()}: {'Accessible' if info['accessible'] else info.get('error', 'Not accessible')}")
+    
+    # Snowflake Connectivity
+    print("\n🏔️ Snowflake Connectivity:")
+    sf_results = results.get('snowflake_connectivity', {})
+    if 'error' in sf_results:
+        print(f"  ❌ {sf_results['error']}")
+    else:
+        status = "✅" if sf_results.get('accessible') else "❌"
+        if sf_results.get('accessible'):
+            print(f"  {status} Connected to {sf_results['database']}.{sf_results['schema']}")
+            print(f"      Version: {sf_results['version']}")
+        else:
+            print(f"  {status} {sf_results.get('error', 'Connection failed')}")
+    
+    # Required Files
+    print("\n📁 Required Files:")
+    file_results = results.get('required_files', {})
     for file_path, exists in file_results.items():
         status = "✅" if exists else "❌"
         print(f"  {status} {file_path}")
-        if not exists:
-            all_checks_passed = False
+
+def main():
+    print("Setup Validation")
+    print("="*50)
+    print("Validating CI/CD pipeline configuration...")
     
-    # Check AWS connectivity
-    print("\nAWS Connectivity:")
-    aws_results = check_aws_connectivity()
-    if 'error' in aws_results:
-        print(f"  ❌ {aws_results['error']}")
-        all_checks_passed = False
-    else:
-        for service, info in aws_results.items():
-            if isinstance(info, dict) and 'accessible' in info:
-                status = "✅" if info['accessible'] else "❌"
-                print(f"  {status} {service.upper()}: {'Accessible' if info['accessible'] else info.get('error', 'Error')}")
-                if not info['accessible']:
-                    all_checks_passed = False
+    results = {}
     
-    # Check Snowflake connectivity
-    print("\nSnowflake Connectivity:")
-    snowflake_results = check_snowflake_connectivity()
-    if 'error' in snowflake_results:
-        print(f"  ❌ {snowflake_results['error']}")
-        all_checks_passed = False
-    elif snowflake_results.get('accessible'):
-        print(f"  ✅ Connected to Snowflake {snowflake_results['version']}")
-        print(f"  ✅ Database: {snowflake_results['database']}")
-        print(f"  ✅ Schema: {snowflake_results['schema']}")
-    else:
-        print(f"  ❌ Connection failed: {snowflake_results.get('error', 'Unknown error')}")
-        all_checks_passed = False
+    results['env_variables'] = check_env_variables()
+    results['aws_connectivity'] = check_aws_connectivity()
+    results['snowflake_connectivity'] = check_snowflake_connectivity()
+    results['required_files'] = check_required_files()
+    
+    print_validation_results(results)
     
     # Summary
-    print("\n" + "=" * 50)
-    if all_checks_passed:
-        print("ALL CHECKS PASSED!")
-        print("Your setup is ready for CI/CD deployment")
-        print("\t Next steps:")
-        print("1. Configure GitHub secrets (see template below)")
-        print("2. Push changes to main branch")
-        print("3. Monitor GitHub Actions workflow")
-        print("4. Run Glue jobs in AWS Console")
-    else:
-        print("❌ SOME CHECKS FAILED")
-        print("Please fix the issues above before deployment")
-        
-    # Generate GitHub secrets template
-    print("\nGitHub Secrets Template:")
-    print(generate_github_secrets_template())
+    env_ok = all(
+        all(var_info['set'] for var_info in category.values())
+        for category in results['env_variables'].values()
+    )
     
-    return all_checks_passed
+    aws_ok = (
+        'error' not in results['aws_connectivity'] and
+        all(service['accessible'] for service in results['aws_connectivity'].values())
+    )
+    
+    sf_ok = results['snowflake_connectivity'].get('accessible', False)
+    
+    files_ok = all(results['required_files'].values())
+    
+    print(f"\n{'='*60}")
+    print("SUMMARY")
+    print(f"{'='*60}")
+    print(f"Environment Variables: {'✅' if env_ok else '❌'}")
+    print(f"AWS Connectivity: {'✅' if aws_ok else '❌'}")
+    print(f"Snowflake Connectivity: {'✅' if sf_ok else '❌'}")
+    print(f"Required Files: {'✅' if files_ok else '❌'}")
+    
+    overall_status = env_ok and aws_ok and sf_ok and files_ok
+    print(f"\nOverall Status: {'✅ READY FOR DEPLOYMENT' if overall_status else '❌ ISSUES FOUND'}")
+    
+    if not overall_status:
+        print("\nGitHub Secrets Template:")
+        print(generate_github_secrets_template())
+        print("\nPlease fix the issues above before deploying.")
+        sys.exit(1)
+    else:
+        print("\n🎉 All validations passed! You're ready to deploy.")
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1) 
+    main() 

@@ -1,18 +1,8 @@
 """
 AWS Glue Job: Raw User Data Transformation to Iceberg
 =====================================================
-
 This Glue job processes raw user data from S3, performs data quality checks,
 enriches the data with additional fields, and saves to Iceberg tables.
-
-Features:
-- Data validation and cleansing
-- Age calculation and categorization
-- Address parsing and geocoding preparation
-- Email domain extraction
-- Phone number standardization
-- Data quality metrics collection
-- Iceberg table with schema evolution support
 """
 
 import sys
@@ -27,7 +17,6 @@ from pyspark.sql.types import *
 import boto3
 from datetime import datetime, date
 
-# Initialize Glue context
 args = getResolvedOptions(sys.argv, [
     'JOB_NAME',
     'S3_INPUT_PATH',
@@ -41,7 +30,6 @@ sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 
-# Configure Spark for Iceberg
 spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
 spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", args['S3_OUTPUT_PATH'])
 spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
@@ -50,19 +38,14 @@ spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-# Define catalog tables based on the base table name
 CATALOG_TABLES = {
     'users_transformed': f"{args['CATALOG_TABLE']}_transformed",
     'data_quality_summary': f"{args['CATALOG_TABLE']}_quality_summary"
 }
 
 def validate_and_cleanse_data(df: DataFrame) -> DataFrame:
-    """
-    Perform data validation and cleansing on raw user data
-    """
     print("🔍 Starting data validation and cleansing...")
     
-    # Add data quality flags
     df_validated = df.withColumn("data_quality_score", lit(100)) \
         .withColumn("quality_issues", array())
     

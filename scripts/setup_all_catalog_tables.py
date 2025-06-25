@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Setup All Glue Catalog Tables
-=============================
-
-This script creates all Iceberg tables in AWS Glue Data Catalog
-for the three data pipeline jobs using schemas from catalog_table_schemas.json.
+AWS Glue Data Catalog Setup Script
 """
 
 import boto3
@@ -17,11 +13,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_glue_client():
-    """Get Glue client"""
+    """Initialize AWS Glue client with configured credentials."""
     return boto3.client('glue')
 
 def load_catalog_schemas():
-    """Load table schemas from catalog_table_schemas.json"""
+    """
+    Load table schemas from catalog_table_schemas.json.
+    
+    Returns:
+        dict: Complete catalog schema configuration
+        
+    Raises:
+        SystemExit: If schema file is not found or invalid JSON
+    """
     schema_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'docs', 'catalog_table_schemas.json')
     
     try:
@@ -35,7 +39,15 @@ def load_catalog_schemas():
         sys.exit(1)
 
 def convert_column_type(json_type):
-    """Convert JSON schema type to AWS Glue type"""
+    """
+    Convert JSON schema type to AWS Glue compatible type.
+    
+    Args:
+        json_type (str): Type from JSON schema
+        
+    Returns:
+        str: AWS Glue compatible type
+    """
     type_mapping = {
         'string': 'string',
         'int': 'int',
@@ -50,10 +62,18 @@ def convert_column_type(json_type):
     return type_mapping.get(json_type, json_type)
 
 def create_table_from_schema(table_name, table_schema):
-    """Create a table using schema from JSON"""
+    """
+    Create AWS Glue table using schema definition from JSON.
+    
+    Args:
+        table_name (str): Name of the table to create
+        table_schema (dict): Schema definition from JSON
+        
+    Returns:
+        bool: True if table created/updated successfully
+    """
     glue_client = get_glue_client()
     
-    # Convert columns from JSON schema to Glue format
     columns = []
     partition_keys = []
     
@@ -64,7 +84,6 @@ def create_table_from_schema(table_name, table_schema):
             'Comment': col['comment']
         }
         
-        # Check if this column is a partition
         if col['name'] in table_schema.get('partitions', []):
             partition_keys.append(glue_column)
         else:
@@ -97,7 +116,12 @@ def create_table_from_schema(table_name, table_schema):
     return create_table_helper(glue_client, table_name, table_input)
 
 def create_database():
-    """Create the pipeline database"""
+    """
+    Create the main pipeline database in AWS Glue Data Catalog.
+    
+    Returns:
+        bool: True if database created or already exists
+    """
     glue_client = get_glue_client()
     
     try:
@@ -117,23 +141,33 @@ def create_database():
         return False
 
 def create_table_helper(glue_client, table_name, table_input):
-    """Helper function to create or update a table"""
+    """
+    Helper function to create or update a table in AWS Glue Data Catalog.
+    
+    Args:
+        glue_client: AWS Glue client instance
+        table_name (str): Name of the table
+        table_input (dict): Table definition for AWS Glue
+        
+    Returns:
+        bool: True if operation successful
+    """
     try:
         glue_client.create_table(
             DatabaseName='data_pipeline_db',
             TableInput=table_input
         )
-        print(f"✅ Table '{table_name}' created successfully!")
+        print(f"✅ Table '{table_name}' created successfully")
         return True
         
     except glue_client.exceptions.AlreadyExistsException:
-        print(f"⚠️ Table '{table_name}' already exists - updating...")
+        print(f"🔄 Table '{table_name}' already exists - updating...")
         try:
             glue_client.update_table(
                 DatabaseName='data_pipeline_db',
                 TableInput=table_input
             )
-            print(f"✅ Table '{table_name}' updated successfully!")
+            print(f"✅ Table '{table_name}' updated successfully")
             return True
         except Exception as e:
             print(f"❌ Error updating table '{table_name}': {str(e)}")
@@ -144,33 +178,36 @@ def create_table_helper(glue_client, table_name, table_input):
         return False
 
 def main():
-    """Main function to create all catalog tables"""
-    print("Setting Up All Glue Catalog Tables")
-    print("=" * 60)
+    """
+    Main execution function for catalog table setup.
     
-    # Load schemas from JSON file
-    print("📋 Loading table schemas from catalog_table_schemas.json...")
+    Creates all tables defined in catalog_table_schemas.json and provides
+    comprehensive status reporting.
+    """
+    print("AWS Glue Data Catalog Setup")
+    print("=" * 50)
+    print("Educational Data Engineering Project")
+    print("Setting up Iceberg tables for multi-layer data pipeline")
+    print("=" * 50)
+    
+    print("🔄 Loading table schemas from catalog_table_schemas.json...")
     catalog_schemas = load_catalog_schemas()
     
-    # Create database
     if not create_database():
         print("❌ Failed to create database. Exiting.")
         sys.exit(1)
     
-    print(f"\n🔄 Creating {len(catalog_schemas['tables'])} tables...")
+    print(f"🔄 Creating {len(catalog_schemas['tables'])} tables...")
     
-    # Track success
     tables_created = []
     tables_failed = []
     
-    # Group tables by job for organized output
     job_tables = {
         'data-pipeline-raw-transformation': [],
         'data-pipeline-analytics-aggregation': [],
         'data-pipeline-time-series-analysis': []
     }
     
-    # Categorize tables by job
     for table_name, table_schema in catalog_schemas['tables'].items():
         job = table_schema.get('job', 'unknown')
         if job in job_tables:
@@ -178,7 +215,6 @@ def main():
         else:
             job_tables['data-pipeline-analytics-aggregation'].append((table_name, table_schema))
     
-    # Create tables by job
     for job_name, tables in job_tables.items():
         if not tables:
             continue
@@ -193,10 +229,9 @@ def main():
             else:
                 tables_failed.append(table_name)
     
-    # Summary
-    print("\n" + "=" * 60)
-    print("📊 SETUP SUMMARY")
-    print("=" * 60)
+    print("\n" + "=" * 50)
+    print("SETUP SUMMARY")
+    print("=" * 50)
     print(f"✅ Tables created successfully: {len(tables_created)}")
     
     if tables_created:
@@ -209,9 +244,14 @@ def main():
             print(f"   • {table}")
         sys.exit(1)
     else:
-        print(f"\n🎉 All {len(tables_created)} tables created successfully!")
-        print(f"📍 Database: {catalog_schemas['database']}")
-        print(f"📍 Warehouse Location: {catalog_schemas['summary']['iceberg_warehouse_location']}")
+        print(f"\n✅ All {len(tables_created)} tables created successfully!")
+        print(f"Database: {catalog_schemas['database']}")
+        print(f"Warehouse Location: {catalog_schemas['summary']['iceberg_warehouse_location']}")
+        print("\nNext Steps:")
+        print("1. Run Glue jobs to populate tables with data")
+        print("2. Verify table schemas in AWS Glue Console")
+        print("3. Test queries in Amazon Athena")
+        print("4. Configure Snowflake external tables")
 
 if __name__ == "__main__":
     main() 

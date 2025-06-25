@@ -3,7 +3,6 @@
 """
 Run Glue Jobs Script
 ===================
-
 This script helps you run the Glue jobs with proper parameters.
 """
 
@@ -14,15 +13,12 @@ import time
 from datetime import datetime
 
 def get_glue_client():
-    """Get Glue client"""
     return boto3.client('glue')
 
 def run_glue_job(job_name: str, job_parameters: dict):
-    """Run a Glue job with parameters"""
     glue_client = get_glue_client()
     
     print(f"Starting Glue job: {job_name}")
-    print(f"Parameters: {json.dumps(job_parameters, indent=2)}")
     
     try:
         response = glue_client.start_job_run(
@@ -31,9 +27,7 @@ def run_glue_job(job_name: str, job_parameters: dict):
         )
         
         job_run_id = response['JobRunId']
-        print(f"✅ Job started successfully!")
-        print(f"🆔 Job Run ID: {job_run_id}")
-        
+        print(f"✅ Job started successfully! Run ID: {job_run_id}")
         return job_run_id
         
     except Exception as e:
@@ -41,7 +35,6 @@ def run_glue_job(job_name: str, job_parameters: dict):
         return None
 
 def wait_for_job_completion(job_name: str, job_run_id: str, timeout_minutes: int = 30):
-    """Wait for job completion"""
     glue_client = get_glue_client()
     
     print(f"Waiting for job completion (timeout: {timeout_minutes} minutes)...")
@@ -78,18 +71,16 @@ def wait_for_job_completion(job_name: str, job_run_id: str, timeout_minutes: int
                 print(f"Job timed out after {timeout_minutes} minutes")
                 return False
             
-            time.sleep(30)  # Wait 30 seconds before checking again
+            time.sleep(30)
             
         except Exception as e:
             print(f"❌ Error checking job status: {str(e)}")
             return False
 
 def main():
-    """Main function to run Glue jobs"""
     print("Glue Jobs Runner")
     print("=" * 50)
     
-    # Job parameters
     job_params = {
         '--S3_INPUT_PATH': 's3://my-amazing-app',
         '--S3_OUTPUT_PATH': 's3://my-amazing-app/iceberg-warehouse',
@@ -98,7 +89,6 @@ def main():
         '--AWS_REGION': 'eu-west-3'
     }
     
-    # Jobs to run in sequence
     jobs_to_run = [
         {
             'name': 'data-pipeline-raw-transformation',
@@ -112,16 +102,15 @@ def main():
         }
     ]
     
-    print(f"📋 Jobs to run: {len(jobs_to_run)}")
+    print(f"Jobs to run: {len(jobs_to_run)}")
     for i, job in enumerate(jobs_to_run, 1):
         print(f"  {i}. {job['description']} ({job['name']})")
     
-    # Ask user what to do
-    print(f"\nWhat would you like to do?")
+    print(f"\nOptions:")
     print("1. Run all jobs in sequence")
     print("2. Run job 1 only (Raw Transformation)")
     print("3. Run job 2 only (Analytics Aggregation)")
-    print("4. Just show job parameters")
+    print("4. Show job parameters")
     print("5. Exit")
     
     try:
@@ -139,7 +128,7 @@ def main():
                 selected_jobs = jobs_to_run
             elif choice == '2':
                 selected_jobs = [jobs_to_run[0]]
-            else:  # choice == '3'
+            else:
                 selected_jobs = [jobs_to_run[1]]
             
             print(f"\nRunning {len(selected_jobs)} job(s)...")
@@ -158,7 +147,6 @@ def main():
                         all_successful = False
                         print(f"❌ Job {job['name']} failed!")
                         
-                        # Ask if user wants to continue
                         if i < len(selected_jobs):
                             continue_choice = input("Continue with next job? (y/N): ").strip().lower()
                             if continue_choice != 'y':
@@ -169,14 +157,14 @@ def main():
             
             print(f"\n{'='*60}")
             if all_successful:
-                print("\t All jobs completed successfully!")
-                print("\n Next Steps:")
+                print("✅ All jobs completed successfully!")
+                print("\nNext Steps:")
                 print("1. Check your S3 bucket for the Iceberg tables")
                 print("2. Verify tables in AWS Glue Data Catalog")
                 print("3. Try your Snowflake CREATE ICEBERG TABLE command")
                 print("4. Run analytics queries in Snowflake")
             else:
-                print("⚠️ Some jobs failed. Check the AWS Glue console for details.")
+                print("❌ Some jobs failed. Check the AWS Glue console for details.")
                 
         else:
             print("❌ Invalid choice. Please enter 1-5.")
