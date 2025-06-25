@@ -334,9 +334,9 @@ jobs:
         if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
           ENV="${{ github.event.inputs.environment }}"
         elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          ENV="dev"
+        elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
           ENV="prod"
-        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-          ENV="staging"
         else
           ENV="dev"
         fi
@@ -455,7 +455,7 @@ jobs:
         elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
           ENV="prod"
         else
-          ENV="staging"
+          ENV="dev"
         fi
         echo "environment=${ENV}" >> $GITHUB_OUTPUT
         
