@@ -116,7 +116,7 @@ jobs:
       run: |
         pip install boto3 awscli
         
-    - name: Create Glue Database and Catalog Tables
+    - name: Create Glue database and catalog tables
       run: |
         echo "Creating Glue catalog database and tables..."
         
