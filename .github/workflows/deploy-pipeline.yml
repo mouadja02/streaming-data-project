@@ -6,6 +6,7 @@ on:
     paths:
       - 'glue_jobs/**'
       - 'snowflake/**'
+      - 'scripts/**'
       - '.github/workflows/**'
   pull_request:
     branches: [ main ]
@@ -25,6 +26,11 @@ on:
         - prod
       skip_deployment:
         description: 'Skip AWS/Snowflake deployment (SQL generation only)'
+        required: false
+        default: false
+        type: boolean
+      commit_generated_files:
+        description: 'Commit generated SQL files to repository'
         required: false
         default: false
         type: boolean
@@ -395,6 +401,39 @@ jobs:
         echo ""
         echo "📁 File sizes:"
         du -h generated_sql/${{ steps.env.outputs.environment }}/*
+        
+    - name: 💾 Commit generated files to repository
+      if: github.event.inputs.commit_generated_files == 'true'
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "💾 Committing generated SQL files for ${ENV} environment..."
+        
+        # Configure git
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add generated files
+        git add generated_sql/${ENV}/
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "ℹ️  No changes to commit"
+        else
+          # Commit changes
+          git commit -m "🔧 Auto-generate SQL files for ${ENV} environment
+          
+          Generated on: $(date)
+          Workflow: ${{ github.workflow }}
+          Run ID: ${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          
+          Files generated:
+          $(find generated_sql/${ENV} -name "*.sql" -exec basename {} \; | sort)"
+          
+          # Push changes
+          git push
+          echo "✅ Generated SQL files committed and pushed successfully!"
+        fi
         
   validate-generated-sql:
     name: ✅ Validate Generated SQL
