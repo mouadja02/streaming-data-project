@@ -80,7 +80,7 @@ def create_users_transformed_table():
                 {'Name': 'data_source', 'Type': 'string', 'Comment': 'Data source identifier'},
                 {'Name': 'glue_job_name', 'Type': 'string', 'Comment': 'Glue job name that processed this record'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/users_transformed/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/users_transformed_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -88,7 +88,7 @@ def create_users_transformed_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_transformed/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_transformed_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -125,7 +125,7 @@ def create_data_quality_summary_table():
                 {'Name': 'processing_date', 'Type': 'date', 'Comment': 'Processing date'},
                 {'Name': 'glue_job_name', 'Type': 'string', 'Comment': 'Glue job name'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/data_quality_summary/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/data_quality_summary_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -133,7 +133,7 @@ def create_data_quality_summary_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/data_quality_summary/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/data_quality_summary_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -178,7 +178,7 @@ def create_users_cleaned_table():
                 {'Name': 'data_quality_score', 'Type': 'double', 'Comment': 'Data quality score'},
                 {'Name': 'processing_timestamp', 'Type': 'timestamp', 'Comment': 'Processing timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/users_transformed/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -186,7 +186,7 @@ def create_users_cleaned_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_transformed/metadata/'
             }
         },
         'PartitionKeys': [
@@ -223,7 +223,7 @@ def create_user_demographics_table():
                 {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Record creation timestamp'},
                 {'Name': 'updated_at', 'Type': 'timestamp', 'Comment': 'Last update timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/user_demographics/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/dim_user_demographics_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -231,7 +231,7 @@ def create_user_demographics_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/user_demographics/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/dim_user_demographics_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -267,7 +267,7 @@ def create_geographic_analysis_table():
                 {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Record creation timestamp'},
                 {'Name': 'updated_at', 'Type': 'timestamp', 'Comment': 'Last update timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/geographic_analysis/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/fact_geographic_analysis_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -275,7 +275,7 @@ def create_geographic_analysis_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/geographic_analysis/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/fact_geographic_analysis_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -312,7 +312,7 @@ def create_age_generation_analysis_table():
                 {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Record creation timestamp'},
                 {'Name': 'updated_at', 'Type': 'timestamp', 'Comment': 'Last update timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/age_generation_analysis/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/fact_age_generation_analysis_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -320,7 +320,7 @@ def create_age_generation_analysis_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/age_generation_analysis/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/fact_age_generation_analysis_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -335,13 +335,13 @@ def create_age_generation_analysis_table():
     
     return create_table_helper(glue_client, 'age_generation_analysis', table_input)
 
-def create_registration_trends_table():
-    """Table for Job 3: Time Series Analysis - Registration Trends"""
+def create_fact_data_quality_metrics_table():
+    """Table for Job 2: Analytics Aggregation - Data Quality Metrics"""
     glue_client = get_glue_client()
     
     table_input = {
-        'Name': 'registration_trends',
-        'Description': 'User registration trends and patterns over time',
+        'Name': 'fact_data_quality_metrics',
+        'Description': 'Data quality metrics fact table with comprehensive quality scores',
         'StorageDescriptor': {
             'Columns': [
                 {'Name': 'trend_key', 'Type': 'string', 'Comment': 'Unique trend identifier'},
@@ -357,7 +357,7 @@ def create_registration_trends_table():
                 {'Name': 'anomaly_score', 'Type': 'double', 'Comment': 'Anomaly score (z-score)'},
                 {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Analysis timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/registration_trends/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/fact_data_quality_metrics_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -365,7 +365,7 @@ def create_registration_trends_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/registration_trends/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/fact_data_quality_metrics_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -381,13 +381,13 @@ def create_registration_trends_table():
     
     return create_table_helper(glue_client, 'registration_trends', table_input)
 
-def create_geographic_expansion_table():
-    """Table for Job 3: Time Series Analysis - Geographic Expansion"""
+def create_fact_email_domain_analysis_table():
+    """Table for Job 2: Analytics Aggregation - Email Domain Analysis"""
     glue_client = get_glue_client()
     
     table_input = {
-        'Name': 'geographic_expansion',
-        'Description': 'Geographic expansion patterns and market penetration over time',
+        'Name': 'fact_email_domain_analysis',
+        'Description': 'Email domain analysis fact table with provider insights',
         'StorageDescriptor': {
             'Columns': [
                 {'Name': 'expansion_key', 'Type': 'string', 'Comment': 'Unique expansion identifier'},
@@ -404,7 +404,7 @@ def create_geographic_expansion_table():
                 {'Name': 'expansion_score', 'Type': 'double', 'Comment': 'Expansion opportunity score'},
                 {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Analysis timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/geographic_expansion/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/fact_email_domain_analysis_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -412,7 +412,7 @@ def create_geographic_expansion_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/geographic_expansion/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/fact_email_domain_analysis_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -428,13 +428,13 @@ def create_geographic_expansion_table():
     
     return create_table_helper(glue_client, 'geographic_expansion', table_input)
 
-def create_data_quality_trends_table():
-    """Table for Job 3: Time Series Analysis - Data Quality Trends"""
+def create_fact_email_provider_analysis_table():
+    """Table for Job 2: Analytics Aggregation - Email Provider Analysis"""
     glue_client = get_glue_client()
     
     table_input = {
-        'Name': 'data_quality_trends',
-        'Description': 'Data quality trends and anomaly detection over time',
+        'Name': 'fact_email_provider_analysis',
+        'Description': 'Email provider analysis fact table with market share insights',
         'StorageDescriptor': {
             'Columns': [
                 {'Name': 'quality_key', 'Type': 'string', 'Comment': 'Unique quality identifier'},
@@ -453,7 +453,7 @@ def create_data_quality_trends_table():
                 {'Name': 'anomaly_score', 'Type': 'double', 'Comment': 'Quality anomaly score'},
                 {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Analysis timestamp'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/data_quality_trends/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/fact_email_provider_analysis_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -461,7 +461,7 @@ def create_data_quality_trends_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/data_quality_trends/metadata/'
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/fact_email_provider_analysis_parquet/metadata/'
             }
         },
         'PartitionKeys': [
@@ -475,7 +475,50 @@ def create_data_quality_trends_table():
         }
     }
     
-    return create_table_helper(glue_client, 'data_quality_trends', table_input)
+    return create_table_helper(glue_client, 'fact_email_provider_analysis', table_input)
+
+def create_fact_quality_by_segment_table():
+    """Table for Job 2: Analytics Aggregation - Quality by Segment"""
+    glue_client = get_glue_client()
+    
+    table_input = {
+        'Name': 'fact_quality_by_segment',
+        'Description': 'Quality analysis by demographic segments',
+        'StorageDescriptor': {
+            'Columns': [
+                {'Name': 'segment_key', 'Type': 'string', 'Comment': 'Unique segment identifier'},
+                {'Name': 'age_group', 'Type': 'string', 'Comment': 'Age group category'},
+                {'Name': 'generation', 'Type': 'string', 'Comment': 'Generation category'},
+                {'Name': 'gender', 'Type': 'string', 'Comment': 'Gender'},
+                {'Name': 'user_count', 'Type': 'bigint', 'Comment': 'Number of users in segment'},
+                {'Name': 'avg_segment_quality', 'Type': 'double', 'Comment': 'Average quality score for segment'},
+                {'Name': 'quality_distribution', 'Type': 'map<string,bigint>', 'Comment': 'Quality score distribution'},
+                {'Name': 'email_quality_score', 'Type': 'double', 'Comment': 'Email validation quality'},
+                {'Name': 'phone_quality_score', 'Type': 'double', 'Comment': 'Phone validation quality'},
+                {'Name': 'created_at', 'Type': 'timestamp', 'Comment': 'Analysis timestamp'}
+            ],
+            'Location': 's3://my-amazing-app/iceberg-warehouse/fact_quality_by_segment_parquet/',
+            'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
+            'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
+            'SerdeInfo': {
+                'SerializationLibrary': 'org.apache.iceberg.mr.mapreduce.IcebergSerDe'
+            },
+            'Parameters': {
+                'table_type': 'ICEBERG',
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/fact_quality_by_segment_parquet/metadata/'
+            }
+        },
+        'PartitionKeys': [
+            {'Name': 'age_group', 'Type': 'string', 'Comment': 'Age group partition'}
+        ],
+        'TableType': 'EXTERNAL_TABLE',
+        'Parameters': {
+            'classification': 'iceberg',
+            'table_type': 'ICEBERG'
+        }
+    }
+    
+    return create_table_helper(glue_client, 'fact_quality_by_segment', table_input)
 
 def create_table_helper(glue_client, table_name, table_input):
     """Helper function to create or update a table"""
@@ -509,14 +552,16 @@ def verify_all_tables():
     glue_client = get_glue_client()
     
     expected_tables = [
+        'users_transformed',
         'data_quality_summary',
         'users_cleaned',
         'user_demographics', 
         'geographic_analysis',
         'age_generation_analysis',
-        'registration_trends',
-        'geographic_expansion',
-        'data_quality_trends'
+        'fact_data_quality_metrics',
+        'fact_email_domain_analysis',
+        'fact_email_provider_analysis',
+        'fact_quality_by_segment'
     ]
     
     print("\n🔍 Verifying all tables...")
@@ -568,15 +613,14 @@ def main():
         tables_created.append('geographic_analysis')
     if create_age_generation_analysis_table():
         tables_created.append('age_generation_analysis')
-    
-    # Job 3: Time Series Analysis
-    print("\n🔄 Job 3: Time Series Analysis Tables")
-    if create_registration_trends_table():
-        tables_created.append('registration_trends')
-    if create_geographic_expansion_table():
-        tables_created.append('geographic_expansion')
-    if create_data_quality_trends_table():
-        tables_created.append('data_quality_trends')
+    if create_fact_data_quality_metrics_table():
+        tables_created.append('fact_data_quality_metrics')
+    if create_fact_email_domain_analysis_table():
+        tables_created.append('fact_email_domain_analysis')
+    if create_fact_email_provider_analysis_table():
+        tables_created.append('fact_email_provider_analysis')
+    if create_fact_quality_by_segment_table():
+        tables_created.append('fact_quality_by_segment')
     
     # Verify all tables
     print("\n" + "=" * 60)
@@ -592,7 +636,6 @@ def main():
         print("3. Run your Glue jobs in sequence:")
         print("   • data-pipeline-raw-transformation")
         print("   • data-pipeline-analytics-aggregation")
-        print("   • data-pipeline-time-series-analysis")
         print("4. Query tables in Amazon Athena")
         
         print("\n🔗 Useful Links:")

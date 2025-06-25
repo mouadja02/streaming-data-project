@@ -46,7 +46,7 @@ def create_catalog_table():
                 {'Name': 'data_quality_score', 'Type': 'double', 'Comment': 'Data quality score (0.0 to 1.0)'},
                 {'Name': 'processing_timestamp', 'Type': 'timestamp', 'Comment': 'When record was processed'}
             ],
-            'Location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned/',
+            'Location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned_parquet/',
             'InputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergInputFormat',
             'OutputFormat': 'org.apache.iceberg.mr.mapreduce.IcebergOutputFormat',
             'SerdeInfo': {
@@ -54,7 +54,7 @@ def create_catalog_table():
             },
             'Parameters': {
                 'table_type': 'ICEBERG',
-                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned/metadata/',
+                'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned_parquet/metadata/',
                 'write.format.default': 'parquet',
                 'write.parquet.compression-codec': 'snappy'
             }
@@ -67,7 +67,7 @@ def create_catalog_table():
         'Parameters': {
             'classification': 'iceberg',
             'table_type': 'ICEBERG',
-            'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned/metadata/'
+            'metadata_location': 's3://my-amazing-app/iceberg-warehouse/users_cleaned_parquet/metadata/'
         }
     }
     
@@ -91,7 +91,7 @@ def create_catalog_table():
         )
         
         print("✅ Table 'users_cleaned' created successfully!")
-        print(f"📍 Location: s3://my-amazing-app/iceberg-warehouse/users_cleaned/")
+        print(f"📍 Location: s3://my-amazing-app/iceberg-warehouse/users_cleaned_parquet/")
         print(f"🗄️ Database: data_pipeline_db")
         print(f"📊 Columns: {len(table_input['StorageDescriptor']['Columns'])}")
         print(f"🔧 Table Type: Apache Iceberg")
