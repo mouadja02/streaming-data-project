@@ -65,7 +65,7 @@ The project implements a multi-layer data pipeline following the medallion archi
 - **Real-time streaming** pipeline foundation with Kafka
 - **Data quality framework** with scoring and validation
 - **Environment-specific SQL generation** from templates
-- **Automated CI/CD deployment** via GitHub Actions
+- **Simple Automated CI/CD deployment** via GitHub Actions
 - **Multi-environment support** (dev, staging, prod)
 
 ### 🔄 Planned Enhancements
