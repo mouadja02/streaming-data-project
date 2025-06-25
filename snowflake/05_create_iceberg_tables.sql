@@ -9,7 +9,7 @@
 -- -------------------------------------------------------------------------
 -- Transformed Users Data (from Glue Job 1)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.users_transformed_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.users_transformed_ext (
     id STRING AS (value:id::STRING),
     first_name STRING AS (value:first_name::STRING),
     last_name STRING AS (value:last_name::STRING),
@@ -49,7 +49,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Data Quality Summary (from Glue Job 1)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.data_quality_summary_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.data_quality_summary_ext (
     total_records NUMBER AS (value:total_records::NUMBER),
     high_quality_records NUMBER AS (value:high_quality_records::NUMBER),
     medium_quality_records NUMBER AS (value:medium_quality_records::NUMBER),
@@ -70,7 +70,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- User Demographics Dimension (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.dim_user_demographics_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.dim_user_demographics_ext (
     user_id STRING AS (value:user_id::STRING),
     age_group STRING AS (value:age_group::STRING),
     generation STRING AS (value:generation::STRING),
@@ -94,7 +94,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Geographic Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_geographic_analysis_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_geographic_analysis_ext (
     geographic_level STRING AS (value:geographic_level::STRING),
     analysis_type STRING AS (value:analysis_type::STRING),
     user_count NUMBER AS (value:user_count::NUMBER),
@@ -115,7 +115,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Age/Generation Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_age_generation_analysis_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_age_generation_analysis_ext (
     age_group STRING AS (value:age_group::STRING),
     generation STRING AS (value:generation::STRING),
     gender STRING AS (value:gender::STRING),
@@ -144,7 +144,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Email Provider Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_email_provider_analysis_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_email_provider_analysis_ext (
     email_provider_type STRING AS (value:email_provider_type::STRING),
     processing_date DATE AS (value:processing_date::DATE),
     total_users NUMBER AS (value:total_users::NUMBER),
@@ -162,7 +162,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Email Domain Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_email_domain_analysis_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_email_domain_analysis_ext (
     email_domain STRING AS (value:email_domain::STRING),
     email_provider_type STRING AS (value:email_provider_type::STRING),
     processing_date DATE AS (value:processing_date::DATE),
@@ -185,7 +185,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Data Quality Metrics Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_data_quality_metrics_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_data_quality_metrics_ext (
     total_records NUMBER AS (value:total_records::NUMBER),
     excellent_quality NUMBER AS (value:excellent_quality::NUMBER),
     good_quality NUMBER AS (value:good_quality::NUMBER),
@@ -214,7 +214,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Quality by Segment Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_quality_by_segment_ext (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_quality_by_segment_ext (
     age_group STRING AS (value:age_group::STRING),
     generation STRING AS (value:generation::STRING),
     processing_date DATE AS (value:processing_date::DATE),

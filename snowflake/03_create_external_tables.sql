@@ -7,7 +7,7 @@
 -- -------------------------------------------------------------------------
 -- Bronze Table 1: Raw Users Data
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_raw_users (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_raw_users (
     id STRING AS (value:id::STRING),
     first_name STRING AS (value:first_name::STRING),
     last_name STRING AS (value:last_name::STRING),
@@ -28,7 +28,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Bronze Table 2: User Analytics Data
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_analytics (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_analytics (
     gender STRING AS (value:gender::STRING),
     count NUMBER AS (value:count::NUMBER),
     percentage NUMBER AS (value:percentage::NUMBER),
@@ -44,7 +44,7 @@ AUTO_REFRESH = TRUE;
 -- -------------------------------------------------------------------------
 -- Bronze Table 3: User Demographics Data
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_demographics (
+CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_demographics (
     country STRING AS (value:country::STRING),
     state STRING AS (value:state::STRING),
     user_count NUMBER AS (value:user_count::NUMBER),

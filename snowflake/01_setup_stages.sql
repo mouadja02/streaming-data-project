@@ -5,7 +5,7 @@
 -- Environment variables will be substituted during CI/CD deployment
 
 -- Create storage integration for S3 access (Iceberg warehouse)
-CREATE OR REPLACE STORAGE INTEGRATION s3_iceberg_integration
+CREATE STORAGE INTEGRATION IF NOT EXISTS s3_iceberg_integration
   TYPE = EXTERNAL_STAGE
   STORAGE_PROVIDER = 'S3'
   ENABLED = TRUE
@@ -17,7 +17,7 @@ CREATE OR REPLACE STORAGE INTEGRATION s3_iceberg_integration
 DESC STORAGE INTEGRATION s3_iceberg_integration;
 
 -- Create stage for Iceberg tables
-CREATE OR REPLACE STAGE iceberg_stage
+CREATE STAGE IF NOT EXISTS iceberg_stage
   STORAGE_INTEGRATION = s3_iceberg_integration
   URL = 's3://${S3_BUCKET_NAME}/iceberg-warehouse/'
   FILE_FORMAT = (TYPE = PARQUET);
@@ -38,7 +38,7 @@ CREATE SCHEMA IF NOT EXISTS BRONZE_LAYER;
 USE SCHEMA BRONZE_LAYER;
 
 -- Create stages for each data type
-CREATE OR REPLACE STAGE raw_users_stage
+CREATE STAGE IF NOT EXISTS raw_users_stage
   URL = 's3://my-amazing-app/users/raw/parquet/'
   CREDENTIALS = (
     AWS_KEY_ID = '${AWS_ACCESS_KEY_ID}'
@@ -47,7 +47,7 @@ CREATE OR REPLACE STAGE raw_users_stage
   FILE_FORMAT = (TYPE = 'PARQUET' COMPRESSION = 'SNAPPY')
   COMMENT = 'Stage for raw user data from Kafka pipeline';
 
-CREATE OR REPLACE STAGE user_analytics_stage
+CREATE STAGE IF NOT EXISTS user_analytics_stage
   URL = 's3://my-amazing-app/users/analytics/parquet/'
   CREDENTIALS = (
     AWS_KEY_ID = '${AWS_ACCESS_KEY_ID}' 
@@ -56,7 +56,7 @@ CREATE OR REPLACE STAGE user_analytics_stage
   FILE_FORMAT = (TYPE = 'PARQUET' COMPRESSION = 'SNAPPY')
   COMMENT = 'Stage for user analytics data (gender, email domains, etc.)';
 
-CREATE OR REPLACE STAGE user_demographics_stage
+CREATE STAGE IF NOT EXISTS user_demographics_stage
   URL = 's3://my-amazing-app/users/demographics/parquet/'
   CREDENTIALS = (
     AWS_KEY_ID = '${AWS_ACCESS_KEY_ID}'
