@@ -160,7 +160,6 @@ class GlueJobManager:
                 '--CATALOG_DATABASE': catalog_database,
                 '--AWS_REGION': self.region,
                 # Iceberg configuration
-                '--conf': 'spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions',
                 '--datalake-formats': 'iceberg',
                 '--additional-python-modules': 'pyiceberg'
             },
