@@ -138,11 +138,13 @@ class SnowflakeConnector:
     def test_external_tables(self) -> Dict[str, Any]:
         """Test the external tables and return status"""
         test_results = {}
+
+        database = os.getenv('SNOWFLAKE_DATABASE')
         
         tables_to_test = [
-            ('ext_raw_users', 'SELECT COUNT(*) FROM ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_raw_users'),
-            ('ext_user_analytics', 'SELECT COUNT(*) FROM ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_analytics'),
-            ('ext_user_demographics', 'SELECT COUNT(*) FROM ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_demographics')
+            ('ext_raw_users', f'SELECT COUNT(*) FROM {database}.BRONZE_LAYER.ext_raw_users'),
+            ('ext_user_analytics', f'SELECT COUNT(*) FROM {database}.BRONZE_LAYER.ext_user_analytics'),
+            ('ext_user_demographics', f'SELECT COUNT(*) FROM {database}.BRONZE_LAYER.ext_user_demographics')
         ]
         
         for table_name, query in tables_to_test:
