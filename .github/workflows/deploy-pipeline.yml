@@ -236,15 +236,29 @@ jobs:
           },
           "DefaultArguments": {
             "--job-language": "python",
-            "--enable-metrics": "",
-            "--enable-continuous-cloudwatch-log": "true",
-            "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/"
+            "--job-bookmark-option": "job-bookmark-enable",
+            "--enable-metrics": "false",
+            "--enable-continuous-cloudwatch-log": "false",
+            "--enable-spark-ui": "false",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
+            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--CATALOG_TABLE": "users_cleaned",
+            "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            "--datalake-formats": "iceberg"
           },
-          "MaxRetries": 1,
-          "Timeout": 60,
-          "MaxCapacity": 2.0,
-          "GlueVersion": "4.0"
+          "MaxRetries": 0,
+          "Timeout": 2880,
+          "GlueVersion": "4.0",
+          "NumberOfWorkers": 2,
+          "WorkerType": "G.1X",
+          "Tags": {
+            "Environment": "production",
+            "Project": "data-pipeline",
+            "JobType": "transformation"
+          }
         }
         EOF
         
@@ -254,7 +268,7 @@ jobs:
         cat > job2-config.json << EOF
         {
           "Name": "data-pipeline-analytics-aggregation",
-          "Description": "Create analytics aggregations and dimensional models",
+          "Description": "Create analytics aggregations and dimensional tables",
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
@@ -263,15 +277,28 @@ jobs:
           },
           "DefaultArguments": {
             "--job-language": "python",
-            "--enable-metrics": "",
-            "--enable-continuous-cloudwatch-log": "true",
-            "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/"
+            "--job-bookmark-option": "job-bookmark-enable",
+            "--enable-metrics": "false",
+            "--enable-continuous-cloudwatch-log": "false",
+            "--enable-spark-ui": "false",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
+            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            "--datalake-formats": "iceberg"
           },
-          "MaxRetries": 1,
-          "Timeout": 60,
-          "MaxCapacity": 2.0,
-          "GlueVersion": "4.0"
+          "MaxRetries": 0,
+          "Timeout": 2880,
+          "GlueVersion": "4.0",
+          "NumberOfWorkers": 3,
+          "WorkerType": "G.1X",
+          "Tags": {
+            "Environment": "production",
+            "Project": "data-pipeline",
+            "JobType": "analytics"
+          }
         }
         EOF
         
@@ -281,7 +308,7 @@ jobs:
         cat > job3-config.json << EOF
         {
           "Name": "data-pipeline-time-series-analysis",
-          "Description": "Time series analysis and trend detection",
+          "Description": "Perform time series analysis and trend detection",
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
@@ -290,15 +317,28 @@ jobs:
           },
           "DefaultArguments": {
             "--job-language": "python",
-            "--enable-metrics": "",
-            "--enable-continuous-cloudwatch-log": "true",
-            "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/"
+            "--job-bookmark-option": "job-bookmark-enable",
+            "--enable-metrics": "false",
+            "--enable-continuous-cloudwatch-log": "false",
+            "--enable-spark-ui": "false",
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
+            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
+            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
+            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
+            "--AWS_REGION": "${{ env.AWS_REGION }}",
+            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            "--datalake-formats": "iceberg"
           },
-          "MaxRetries": 1,
-          "Timeout": 60,
-          "MaxCapacity": 2.0,
-          "GlueVersion": "4.0"
+          "MaxRetries": 0,
+          "Timeout": 2880,
+          "GlueVersion": "4.0",
+          "NumberOfWorkers": 3,
+          "WorkerType": "G.1X",
+          "Tags": {
+            "Environment": "production",
+            "Project": "data-pipeline",
+            "JobType": "analysis"
+          }
         }
         EOF
         
