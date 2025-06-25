@@ -201,8 +201,8 @@ def setup_snowflake_tables():
         
         # Execute SQL files in order
         sql_files = [
-            'snowflake/01_setup_stages.sql',
-            'snowflake/02_create_file_formats.sql',
+            'snowflake/00_setup_stages.sql',
+            'snowflake/01_create_file_formats.sql',
             'snowflake/03_create_external_tables.sql'
         ]
         

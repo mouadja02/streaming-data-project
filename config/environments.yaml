@@ -52,32 +52,32 @@ environments:
 # Template file configurations
 templates:
   files:
-    - name: "02_create_file_formats.sql"
+    - name: "01_create_file_formats.sql"
       description: "File formats for Parquet data"
       category: "setup"
       order: 1
     
-    - name: "03_bronze_layer.sql" 
+    - name: "02_bronze_layer.sql" 
       description: "External tables (Bronze layer)"
       category: "bronze"
       order: 2
       
-    - name: "04_bronze_checks.sql"
+    - name: "03_bronze_checks.sql"
       description: "Data validation and quality checks"
       category: "validation"
       order: 3
       
-    - name: "05_silver_layer.sql"
+    - name: "04_silver_layer.sql"
       description: "Iceberg tables (Silver layer)"
       category: "silver"
       order: 4
       
-    - name: "06_gold_layer.sql"
+    - name: "05_gold_layer.sql"
       description: "Analytics views (Gold layer)"
       category: "gold"
       order: 5
       
-    - name: "07_final_checks.sql"
+    - name: "06_final_checks.sql"
       description: "Final validation and examples"
       category: "validation"
       order: 6

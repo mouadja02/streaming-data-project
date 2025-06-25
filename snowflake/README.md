@@ -40,8 +40,8 @@ API → Kafka → Spark → S3 → AWS Glue → Iceberg → Snowflake
 
 ```
 snowflake/
-├── 01_setup_stages.sql          # S3 storage integration & stages
-├── 02_create_file_formats.sql   # Parquet file formats
+├── 00_setup_stages.sql          # S3 storage integration & stages
+├── 01_create_file_formats.sql   # Parquet file formats
 ├── 03_create_external_tables.sql # Bronze layer tables
 ├── 04_sample_queries.sql        # Legacy queries (Bronze layer)
 ├── 05_create_iceberg_tables.sql # Silver layer tables (CI/CD)
@@ -163,8 +163,8 @@ SELECT * FROM your_database.GOLD_LAYER.VW_DATA_ENRICHMENT_IMPACT;
 
 If not using CI/CD, run scripts manually in this order:
 
-1. **Setup Storage** (Admin): `01_setup_stages.sql`
-2. **File Formats**: `02_create_file_formats.sql`  
+1. **Setup Storage** (Admin): `00_setup_stages.sql`
+2. **File Formats**: `01_create_file_formats.sql`  
 3. **Bronze Tables**: `03_create_external_tables.sql`
 4. **Silver Tables**: `05_create_iceberg_tables.sql`
 5. **Gold Views**: `07_create_gold_views.sql`

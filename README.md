@@ -137,12 +137,12 @@ python scripts/run_glue_jobs.py
 # Use generated SQL files for your environment
 # Example for dev environment:
 # Execute files in generated_sql/dev/ in order:
-# 1. 02_create_file_formats.sql
-# 2. 03_bronze_layer.sql  
-# 3. 04_bronze_checks.sql
-# 4. 05_silver_layer.sql
-# 5. 06_gold_layer.sql
-# 6. 07_final_checks.sql
+# 1. 01_create_file_formats.sql
+# 2. 02_bronze_layer.sql  
+# 3. 03_bronze_checks.sql
+# 4. 04_silver_layer.sql
+# 5. 05_gold_layer.sql
+# 6. 06_final_checks.sql
 ```
 
 ### Step 5: Verify Results
@@ -197,13 +197,13 @@ data-project-1/
 │   └── validate_setup.py
 ├── 
 ├── snowflake/                     # Data warehouse layer
-│   ├── 01_setup_stages.sql
-│   ├── 02_create_file_formats.sql
-│   ├── 03_bronze_layer.sql
-│   ├── 04_bronze_checks.sql
-│   ├── 05_silver_layer.sql
+│   ├── 00_setup_stages.sql
+│   ├── 01_create_file_formats.sql
+│   ├── 02_bronze_layer.sql
+│   ├── 03_bronze_checks.sql
+│   ├── 04_silver_layer.sql
 │   ├── 06_create_gold_views.sql
-│   └── 07_final_checks.sql
+│   └── 06_final_checks.sql
 ├── 
 ├── docs/                          # Documentation
 │   └── catalog_table_schemas.json
@@ -288,12 +288,12 @@ Each environment has specific configurations defined in `config/environments.yam
 generated_sql/
 ├── dev/
 │   ├── README.md                 # Environment-specific documentation
-│   ├── 02_create_file_formats.sql
-│   ├── 03_bronze_layer.sql
-│   ├── 04_bronze_checks.sql
-│   ├── 05_silver_layer.sql
-│   ├── 06_gold_layer.sql
-│   └── 07_final_checks.sql
+│   ├── 01_create_file_formats.sql
+│   ├── 02_bronze_layer.sql
+│   ├── 03_bronze_checks.sql
+│   ├── 04_silver_layer.sql
+│   ├── 05_gold_layer.sql
+│   └── 06_final_checks.sql
 ├── staging/
 │   └── [same structure as dev]
 └── prod/
