@@ -2,7 +2,7 @@ name: Deploy Data Pipeline Infrastructure
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
     paths:
       - 'glue_jobs/**'
       - 'snowflake/**'
@@ -12,18 +12,44 @@ on:
     paths:
       - 'glue_jobs/**'
       - 'snowflake/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment for SQL generation'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      skip_deployment:
+        description: 'Skip AWS/Snowflake deployment (SQL generation only)'
+        required: false
+        default: false
+        type: boolean
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   GLUE_ROLE_NAME: data-engineer-user
   GLUE_DATABASE_NAME: data_pipeline_db
   S3_SCRIPTS_PREFIX: glue-scripts/
+  # SQL Generation environment variables (no credentials)
+  SNOWFLAKE_DATABASE_DEV: "ECOMMERCE_DEV_DB"
+  SNOWFLAKE_DATABASE_STAGING: "ECOMMERCE_STAGING_DB" 
+  SNOWFLAKE_DATABASE_PROD: "ECOMMERCE_PROD_DB"
+  SNOWFLAKE_WAREHOUSE_DEV: "COMPUTE_WH_DEV"
+  SNOWFLAKE_WAREHOUSE_STAGING: "COMPUTE_WH_STAGING"
+  SNOWFLAKE_WAREHOUSE_PROD: "COMPUTE_WH_PROD"
+  S3_BUCKET_DEV: "my-amazing-app-dev"
+  S3_BUCKET_STAGING: "my-amazing-app-staging"
+  S3_BUCKET_PROD: "my-amazing-app-prod"
 
 jobs:
   deploy-snowflake:
     name: 🏔️ Deploy Snowflake Infrastructure
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event.inputs.skip_deployment != 'true'
     
     steps:
     - name: 📥 Checkout code
@@ -61,7 +87,7 @@ jobs:
   deploy-aws-glue:
     name: ⚡ Deploy AWS Glue Jobs
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event.inputs.skip_deployment != 'true'
     needs: deploy-snowflake
     
     steps:
@@ -204,46 +230,25 @@ jobs:
           },
           "DefaultArguments": {
             "--job-language": "python",
-            "--job-bookmark-option": "job-bookmark-enable",
-            "--enable-metrics": "true",
+            "--enable-metrics": "",
             "--enable-continuous-cloudwatch-log": "true",
             "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
-            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
-            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
-            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
-            "--CATALOG_TABLE": "users_cleaned",
-            "--AWS_REGION": "${{ env.AWS_REGION }}",
-            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
-            "--datalake-formats": "iceberg"
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/"
           },
-          "MaxRetries": 0,
-          "Timeout": 2880,
-          "GlueVersion": "4.0",
-          "NumberOfWorkers": 3,
-          "WorkerType": "G.1X",
-          "Tags": {
-            "Environment": "production",
-            "Project": "data-pipeline",
-            "JobType": "transformation"
-          }
+          "MaxRetries": 1,
+          "Timeout": 60,
+          "MaxCapacity": 2.0,
+          "GlueVersion": "4.0"
         }
         EOF
         
-        # Create or update job 1
-        if aws glue get-job --job-name data-pipeline-raw-transformation >/dev/null 2>&1; then
-          echo "Updating existing job: data-pipeline-raw-transformation"
-          aws glue update-job --job-name data-pipeline-raw-transformation --job-update file://job1-config.json
-        else
-          echo "Creating new job: data-pipeline-raw-transformation"
-          aws glue create-job --cli-input-json file://job1-config.json
-        fi
+        aws glue create-job --cli-input-json file://job1-config.json
         
         # Job 2: Analytics Aggregation
         cat > job2-config.json << EOF
         {
           "Name": "data-pipeline-analytics-aggregation",
-          "Description": "Create analytics aggregations and dimensional tables",
+          "Description": "Create analytics aggregations and dimensional models",
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
@@ -252,45 +257,25 @@ jobs:
           },
           "DefaultArguments": {
             "--job-language": "python",
-            "--job-bookmark-option": "job-bookmark-enable",
-            "--enable-metrics": "true",
+            "--enable-metrics": "",
             "--enable-continuous-cloudwatch-log": "true",
             "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
-            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
-            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
-            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
-            "--AWS_REGION": "${{ env.AWS_REGION }}",
-            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
-            "--datalake-formats": "iceberg"
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/"
           },
-          "MaxRetries": 0,
-          "Timeout": 2880,
-          "GlueVersion": "4.0",
-          "NumberOfWorkers": 3,
-          "WorkerType": "G.1X",
-          "Tags": {
-            "Environment": "production",
-            "Project": "data-pipeline",
-            "JobType": "analytics"
-          }
+          "MaxRetries": 1,
+          "Timeout": 60,
+          "MaxCapacity": 2.0,
+          "GlueVersion": "4.0"
         }
         EOF
         
-        # Create or update job 2
-        if aws glue get-job --job-name data-pipeline-analytics-aggregation >/dev/null 2>&1; then
-          echo "Updating existing job: data-pipeline-analytics-aggregation"
-          aws glue update-job --job-name data-pipeline-analytics-aggregation --job-update file://job2-config.json
-        else
-          echo "Creating new job: data-pipeline-analytics-aggregation"
-          aws glue create-job --cli-input-json file://job2-config.json
-        fi
+        aws glue create-job --cli-input-json file://job2-config.json
         
         # Job 3: Time Series Analysis
         cat > job3-config.json << EOF
         {
           "Name": "data-pipeline-time-series-analysis",
-          "Description": "Perform time series analysis and trend detection",
+          "Description": "Time series analysis and trend detection",
           "Role": "$ROLE_ARN",
           "Command": {
             "Name": "glueetl",
@@ -299,89 +284,271 @@ jobs:
           },
           "DefaultArguments": {
             "--job-language": "python",
-            "--job-bookmark-option": "job-bookmark-enable",
-            "--enable-metrics": "true",
+            "--enable-metrics": "",
             "--enable-continuous-cloudwatch-log": "true",
             "--enable-spark-ui": "true",
-            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/",
-            "--S3_INPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}",
-            "--S3_OUTPUT_PATH": "s3://${{ secrets.S3_BUCKET_NAME }}/iceberg-warehouse",
-            "--CATALOG_DATABASE": "${{ env.GLUE_DATABASE_NAME }}",
-            "--AWS_REGION": "${{ env.AWS_REGION }}",
-            "--conf": "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
-            "--datalake-formats": "iceberg"
+            "--spark-event-logs-path": "s3://${{ secrets.S3_BUCKET_NAME }}/spark-logs/"
           },
-          "MaxRetries": 0,
-          "Timeout": 2880,
-          "GlueVersion": "4.0",
-          "NumberOfWorkers": 3,
-          "WorkerType": "G.1X",
-          "Tags": {
-            "Environment": "production",
-            "Project": "data-pipeline",
-            "JobType": "analysis"
-          }
+          "MaxRetries": 1,
+          "Timeout": 60,
+          "MaxCapacity": 2.0,
+          "GlueVersion": "4.0"
         }
         EOF
         
-        # Create or update job 3
-        if aws glue get-job --job-name data-pipeline-time-series-analysis >/dev/null 2>&1; then
-          echo "Updating existing job: data-pipeline-time-series-analysis"
-          aws glue update-job --job-name data-pipeline-time-series-analysis --job-update file://job3-config.json
-        else
-          echo "Creating new job: data-pipeline-time-series-analysis"
-          aws glue create-job --cli-input-json file://job3-config.json
-        fi
+        aws glue create-job --cli-input-json file://job3-config.json
         
-        echo "✅ All Glue jobs created/updated successfully!"
+        echo "✅ All Glue jobs created successfully!"
         
-    - name: 🔄 Create Glue Workflow (Optional)
-      run: |
-        echo "🔄 Creating Glue workflow for job orchestration..."
-        
-        # Create workflow
-        aws glue create-workflow \
-          --name data-pipeline-workflow \
-          --description "Data pipeline workflow for sequential job execution" \
-          --tags Environment=production,Project=data-pipeline || echo "Workflow already exists"
-        
-        echo "✅ Workflow setup completed!"
-        
-    - name: ✅ AWS Glue deployment summary
+    - name: ✅ AWS deployment summary
       run: |
         echo "✅ AWS Glue infrastructure deployed successfully!"
-        echo "⚡ Glue jobs are ready to run in AWS Console"
-        echo "🗄️ Database: ${{ env.GLUE_DATABASE_NAME }}"
-        echo "📋 Jobs created:"
-        echo "  1. data-pipeline-raw-transformation"
-        echo "  2. data-pipeline-analytics-aggregation" 
-        echo "  3. data-pipeline-time-series-analysis"
-        echo ""
-        echo "🎯 Next steps:"
-        echo "  1. Go to AWS Glue Console"
-        echo "  2. Run jobs individually or use workflow"
-        echo "  3. Monitor execution in CloudWatch"
-        echo "  4. Query Iceberg tables in Athena"
-        echo "  5. Analyze data in Snowflake"
+        echo "⚡ 3 Glue jobs created and ready to run"
+        echo "🗄️ Data catalog tables configured"
+        echo "🔐 IAM roles and policies configured"
 
-  notify-completion:
-    name: 📢 Notify Deployment Completion
+  generate-sql-files:
+    name: 🔧 Generate Snowflake SQL Files
     runs-on: ubuntu-latest
     needs: [deploy-snowflake, deploy-aws-glue]
-    if: always() && github.ref == 'refs/heads/main'
+    if: always() && (needs.deploy-snowflake.result == 'success' || needs.deploy-snowflake.result == 'skipped') && (needs.deploy-aws-glue.result == 'success' || needs.deploy-aws-glue.result == 'skipped')
     
     steps:
-    - name: 🎉 Deployment Summary
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: 🎯 Determine target environment
+      id: env
       run: |
-        echo "🎉 PIPELINE DEPLOYMENT COMPLETED!"
-        echo "================================="
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          ENV="${{ github.event.inputs.environment }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          ENV="prod"
+        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          ENV="staging"
+        else
+          ENV="dev"
+        fi
+        echo "environment=${ENV}" >> $GITHUB_OUTPUT
+        echo "🎯 Target environment: ${ENV}"
+        
+    - name: 🔧 Generate SQL files for target environment  
+      run: |
+        python scripts/generate_snowflake_sql.py ${{ steps.env.outputs.environment }}
+        
+    - name: 📊 Create deployment summary
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "## 🔧 SQL Generation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** \`${ENV}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -d "generated_sql/${ENV}" ]; then
+          for file in generated_sql/${ENV}/*.sql; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "Unknown")
+              echo "- ✅ \`${filename}\` (${size} bytes)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Environment Configuration:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        case ${ENV} in
+          "dev")
+            echo "- **Database:** \`${{ env.SNOWFLAKE_DATABASE_DEV }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warehouse:** \`${{ env.SNOWFLAKE_WAREHOUSE_DEV }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **S3 Bucket:** \`${{ env.S3_BUCKET_DEV }}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+          "staging")
+            echo "- **Database:** \`${{ env.SNOWFLAKE_DATABASE_STAGING }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warehouse:** \`${{ env.SNOWFLAKE_WAREHOUSE_STAGING }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **S3 Bucket:** \`${{ env.S3_BUCKET_STAGING }}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+          "prod")
+            echo "- **Database:** \`${{ env.SNOWFLAKE_DATABASE_PROD }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warehouse:** \`${{ env.SNOWFLAKE_WAREHOUSE_PROD }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **S3 Bucket:** \`${{ env.S3_BUCKET_PROD }}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+        esac
+        
+    - name: 📤 Upload generated SQL files as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: snowflake-sql-${{ steps.env.outputs.environment }}
+        path: generated_sql/${{ steps.env.outputs.environment }}/
+        retention-days: 30
+        
+    - name: 📋 List generated files
+      run: |
+        echo "🎯 Generated SQL files for ${{ steps.env.outputs.environment }} environment:"
+        ls -la generated_sql/${{ steps.env.outputs.environment }}/
         echo ""
-        echo "✅ Snowflake Infrastructure: ${{ needs.deploy-snowflake.result }}"
-        echo "✅ AWS Glue Jobs: ${{ needs.deploy-aws-glue.result }}"
-        echo ""
-        echo "🔗 Access Points:"
-        echo "  • AWS Glue Console: https://console.aws.amazon.com/glue/"
-        echo "  • Snowflake Console: https://app.snowflake.com/"
-        echo "  • CloudWatch Logs: https://console.aws.amazon.com/cloudwatch/"
-        echo ""
-        echo "🚀 Ready to process data!" 
+        echo "📁 File sizes:"
+        du -h generated_sql/${{ steps.env.outputs.environment }}/*
+        
+  validate-generated-sql:
+    name: ✅ Validate Generated SQL
+    runs-on: ubuntu-latest
+    needs: generate-sql-files
+    if: always() && needs.generate-sql-files.result == 'success'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🎯 Determine target environment
+      id: env
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          ENV="${{ github.event.inputs.environment }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          ENV="prod"
+        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          ENV="staging"
+        else
+          ENV="dev"
+        fi
+        echo "environment=${ENV}" >> $GITHUB_OUTPUT
+        
+    - name: 📥 Download generated SQL files
+      uses: actions/download-artifact@v4
+      with:
+        name: snowflake-sql-${{ steps.env.outputs.environment }}
+        path: generated_sql/${{ steps.env.outputs.environment }}/
+        
+    - name: 🔍 Validate SQL syntax and content
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "🔍 Validating generated SQL files for ${ENV} environment..."
+        
+        # Check if files were generated
+        if [ ! -d "generated_sql/${ENV}" ]; then
+          echo "❌ Generated SQL directory not found!"
+          exit 1
+        fi
+        
+        # Count generated files
+        sql_count=$(find generated_sql/${ENV} -name "*.sql" | wc -l)
+        echo "📊 Found ${sql_count} SQL files"
+        
+        if [ ${sql_count} -eq 0 ]; then
+          echo "❌ No SQL files were generated!"
+          exit 1
+        fi
+        
+        # Validate each SQL file
+        for sql_file in generated_sql/${ENV}/*.sql; do
+          if [ -f "$sql_file" ]; then
+            filename=$(basename "$sql_file")
+            echo "🔍 Validating ${filename}..."
+            
+            # Check file is not empty
+            if [ ! -s "$sql_file" ]; then
+              echo "❌ ${filename} is empty!"
+              exit 1
+            fi
+            
+            # Check for template variables that weren't replaced
+            if grep -q '\${' "$sql_file"; then
+              echo "⚠️  ${filename} contains unreplaced variables:"
+              grep '\${' "$sql_file" || true
+            fi
+            
+            # Basic SQL syntax check (look for common keywords)
+            if ! grep -qi -E "(CREATE|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER)" "$sql_file"; then
+              echo "⚠️  ${filename} might not contain valid SQL statements"
+            fi
+            
+            # Check for environment-specific values
+            case ${ENV} in
+              "dev")
+                if ! grep -q "DEV" "$sql_file"; then
+                  echo "⚠️  ${filename} might not contain DEV environment values"
+                fi
+                ;;
+              "staging")
+                if ! grep -q "STAGING" "$sql_file"; then
+                  echo "⚠️  ${filename} might not contain STAGING environment values"
+                fi
+                ;;
+              "prod")
+                if ! grep -q "PROD" "$sql_file"; then
+                  echo "⚠️  ${filename} might not contain PROD environment values"
+                fi
+                ;;
+            esac
+            
+            echo "✅ ${filename} validation completed"
+          fi
+        done
+        
+        echo "🎉 All SQL files validated successfully!"
+        
+    - name: 📊 Generate validation report
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "## ✅ SQL Validation Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** \`${ENV}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # File validation summary
+        sql_count=$(find generated_sql/${ENV} -name "*.sql" | wc -l)
+        echo "### Validation Summary:" >> $GITHUB_STEP_SUMMARY
+        echo "- 📁 **Files Generated:** ${sql_count}" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ **Validation Status:** Passed" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎯 **Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### File Details:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| File | Size | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|------|--------|" >> $GITHUB_STEP_SUMMARY
+        
+        for sql_file in generated_sql/${ENV}/*.sql; do
+          if [ -f "$sql_file" ]; then
+            filename=$(basename "$sql_file")
+            size=$(stat -f%z "$sql_file" 2>/dev/null || stat -c%s "$sql_file" 2>/dev/null || echo "Unknown")
+            echo "| \`${filename}\` | ${size} bytes | ✅ Valid |" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+
+  deployment-summary:
+    name: 📋 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-snowflake, deploy-aws-glue, generate-sql-files, validate-generated-sql]
+    if: always()
+    
+    steps:
+    - name: 📊 Create final deployment summary
+      run: |
+        echo "## 🚀 Pipeline Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Job Status:" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏔️  **Snowflake Deployment:** ${{ needs.deploy-snowflake.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ⚡ **AWS Glue Deployment:** ${{ needs.deploy-aws-glue.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔧 **SQL Generation:** ${{ needs.generate-sql-files.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ **SQL Validation:** ${{ needs.validate-generated-sql.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Determine overall status
+        if [[ "${{ needs.deploy-snowflake.result }}" == "success" && "${{ needs.deploy-aws-glue.result }}" == "success" && "${{ needs.generate-sql-files.result }}" == "success" && "${{ needs.validate-generated-sql.result }}" == "success" ]]; then
+          echo "### 🎉 Overall Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "All pipeline components deployed successfully!" >> $GITHUB_STEP_SUMMARY
+        elif [[ "${{ needs.generate-sql-files.result }}" == "success" && "${{ needs.validate-generated-sql.result }}" == "success" ]]; then
+          echo "### ✅ Overall Status: SQL GENERATION SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "SQL files generated and validated successfully!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ⚠️  Overall Status: PARTIAL SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "Some components may have failed. Check individual job logs." >> $GITHUB_STEP_SUMMARY
+        fi 

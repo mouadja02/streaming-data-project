@@ -217,8 +217,7 @@ data-project-1/
 │   └── prod/                     # Production environment SQL
 ├── 
 ├── .github/workflows/             # CI/CD workflows
-│   ├── deploy-pipeline.yml       # Main deployment pipeline
-│   └── generate-snowflake-sql.yml # SQL generation workflow
+│   └── deploy-pipeline.yml       # Unified deployment and SQL generation pipeline
 ├── 
 ├── Makefile                       # Convenient project commands
 └── output/                        # Local data output
@@ -303,11 +302,13 @@ generated_sql/
 
 ### CI/CD Integration
 
-The project includes a GitHub Actions workflow (`.github/workflows/generate-snowflake-sql.yml`) that:
+The project includes a unified GitHub Actions workflow (`.github/workflows/deploy-pipeline.yml`) that:
+- Deploys AWS Glue jobs and Snowflake infrastructure
 - Automatically generates SQL files when templates change
 - Validates generated files for syntax and completeness
 - Creates artifacts for each environment
-- Provides detailed reporting and summaries
+- Provides comprehensive deployment summaries
+- Supports manual triggers with environment selection
 
 ### Template Variables
 
