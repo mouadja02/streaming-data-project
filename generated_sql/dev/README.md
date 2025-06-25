@@ -7,7 +7,7 @@ This directory contains the generated Snowflake SQL files for the **dev** enviro
 - **Database**: `ECOMMERCE_DB`
 - **Warehouse**: `INT_WH`
 - **S3 Bucket**: `my-amazing-app`
-- **Generated**: 2025-06-25 21:53:30 UTC
+- **Generated**: 2025-06-25 22:09:13 UTC
 
 ## Files
 
