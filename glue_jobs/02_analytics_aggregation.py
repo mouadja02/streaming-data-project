@@ -399,7 +399,7 @@ def main():
         except:
             # Fallback to S3 Parquet files
             print("📖 Fallback: Reading from S3 Parquet files...")
-            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_cleaned_transformed_parquet/")
+            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_transformed_parquet/")
         
         print(f"📊 Input data count: {users_df.count()} records")
         
