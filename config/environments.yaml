@@ -8,11 +8,11 @@ environments:
     name: "Development"
     description: "Development environment for testing and development"
     snowflake:
-      database: "ECOMMERCE_DEV_DB"
-      warehouse: "COMPUTE_WH_DEV" 
+      database: "ECOMMERCE_DB"
+      warehouse: "INT_WH" 
       schema_prefix: "DEV_"
     aws:
-      s3_bucket: "my-amazing-app-dev"
+      s3_bucket: "my-amazing-app"
       region: "us-east-1"
     features:
       auto_refresh: true

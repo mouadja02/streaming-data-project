@@ -32,9 +32,9 @@ def get_default_config():
     """Get default configuration for all environments"""
     return {
         'dev': {
-            'SNOWFLAKE_DATABASE': os.getenv('SNOWFLAKE_DATABASE_DEV', 'ECOMMERCE_DEV_DB'),
-            'SNOWFLAKE_WAREHOUSE': os.getenv('SNOWFLAKE_WAREHOUSE_DEV', 'COMPUTE_WH_DEV'),
-            'S3_BUCKET_NAME': os.getenv('S3_BUCKET_DEV', 'my-amazing-app-dev'),
+            'SNOWFLAKE_DATABASE': os.getenv('SNOWFLAKE_DATABASE_DEV', 'ECOMMERCE_DB'),
+            'SNOWFLAKE_WAREHOUSE': os.getenv('SNOWFLAKE_WAREHOUSE_DEV', 'INT_WH'),
+            'S3_BUCKET_NAME': os.getenv('S3_BUCKET_DEV', 'my-amazing-app'),
         },
         'staging': {
             'SNOWFLAKE_DATABASE': os.getenv('SNOWFLAKE_DATABASE_STAGING', 'ECOMMERCE_STAGING_DB'),

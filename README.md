@@ -279,7 +279,7 @@ Each environment has specific configurations defined in `config/environments.yam
 
 | Environment | Database | Warehouse | S3 Bucket |
 |-------------|----------|-----------|-----------|
-| **dev** | `ECOMMERCE_DEV_DB` | `COMPUTE_WH_DEV` | `my-amazing-app-dev` |
+| **dev** | `ECOMMERCE_DB` | `INT_WH` | `my-amazing-app` |
 | **staging** | `ECOMMERCE_STAGING_DB` | `COMPUTE_WH_STAGING` | `my-amazing-app-staging` |
 | **prod** | `ECOMMERCE_PROD_DB` | `COMPUTE_WH_PROD` | `my-amazing-app-prod` |
 
@@ -316,9 +316,9 @@ The following variables are automatically replaced in templates:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `${SNOWFLAKE_DATABASE}` | Target database name | `ECOMMERCE_DEV_DB` |
-| `${SNOWFLAKE_WAREHOUSE}` | Compute warehouse | `COMPUTE_WH_DEV` |
-| `${S3_BUCKET_NAME}` | S3 bucket for data | `my-amazing-app-dev` |
+| `${SNOWFLAKE_DATABASE}` | Target database name | `ECOMMERCE_DB` |
+| `${SNOWFLAKE_WAREHOUSE}` | Compute warehouse | `INT_WH` |
+| `${S3_BUCKET_NAME}` | S3 bucket for data | `my-amazing-app` |
 
 ### Best Practices
 
