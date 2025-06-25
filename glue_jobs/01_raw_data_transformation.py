@@ -40,6 +40,14 @@ args = getResolvedOptions(sys.argv, [
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
+
+# Configure Spark for Iceberg
+spark.conf.set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+spark.conf.set("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.warehouse", args['S3_OUTPUT_PATH'])
+spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
@@ -268,23 +276,72 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
     """
     print(f"💾 Saving data to Iceberg table: {table_name}")
     
+    # Map table names to S3 locations to match catalog setup
+    table_locations = {
+        "users_transformed": f"{args['S3_OUTPUT_PATH']}/users_transformed_parquet/",
+        "data_quality_summary": f"{args['S3_OUTPUT_PATH']}/data_quality_summary_parquet/",
+        "users_cleaned": f"{args['S3_OUTPUT_PATH']}/users_transformed/"
+    }
+    
+    # Get the S3 location for this table
+    s3_location = table_locations.get(table_name, f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/")
+    
     # Create table identifier
     full_table_name = f"glue_catalog.{args['CATALOG_DATABASE']}.{table_name}"
     
     try:
-        # Write to Iceberg table
-        df.write.format("iceberg").mode(write_mode).saveAsTable(full_table_name)
+        # Configure Iceberg table properties
+        iceberg_options = {
+            "path": s3_location,
+            "catalog-name": "glue_catalog",
+            "warehouse": args['S3_OUTPUT_PATH'],
+            "write.format.default": "parquet",
+            "write.parquet.compression-codec": "snappy"
+        }
+        
+        # Write to Iceberg table with explicit location
+        writer = df.write.format("iceberg")
+        for key, value in iceberg_options.items():
+            writer = writer.option(key, value)
+        
+        writer.mode(write_mode).saveAsTable(full_table_name)
+        
         print(f"✅ Successfully saved to Iceberg table: {full_table_name}")
+        print(f"📍 Location: {s3_location}")
         
         # Print table info
-        spark.sql(f"DESCRIBE TABLE {full_table_name}").show(truncate=False)
+        try:
+            spark.sql(f"DESCRIBE TABLE {full_table_name}").show(truncate=False)
+        except:
+            print("ℹ️ Could not describe table (normal for first run)")
         
     except Exception as e:
         print(f"❌ Error saving to Iceberg table: {str(e)}")
-        # Fallback to Parquet if Iceberg fails
-        fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
-        print(f"💾 Falling back to Parquet format at: {fallback_path}")
-        df.write.mode(write_mode).parquet(fallback_path)
+        print(f"🔄 Attempting alternative Iceberg write method...")
+        
+        try:
+            # Alternative method: Create table first, then insert
+            spark.sql(f"""
+                CREATE TABLE IF NOT EXISTS {full_table_name}
+                USING ICEBERG
+                LOCATION '{s3_location}'
+                AS SELECT * FROM temp_view WHERE 1=0
+            """)
+            
+            # Create temp view and insert
+            df.createOrReplaceTempView("temp_insert_view")
+            if write_mode == "overwrite":
+                spark.sql(f"DELETE FROM {full_table_name}")
+            spark.sql(f"INSERT INTO {full_table_name} SELECT * FROM temp_insert_view")
+            
+            print(f"✅ Successfully saved using alternative method")
+            
+        except Exception as e2:
+            print(f"❌ Alternative method also failed: {str(e2)}")
+            # Final fallback to Parquet
+            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
+            print(f"💾 Final fallback to Parquet format at: {fallback_path}")
+            df.write.mode(write_mode).parquet(fallback_path)
 
 def main():
     """
