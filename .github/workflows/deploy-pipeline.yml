@@ -53,24 +53,24 @@ env:
 
 jobs:
   deploy-snowflake:
-    name: 🏔️ Deploy Snowflake Infrastructure
+    name: Deploy Snowflake Infrastructure
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event.inputs.skip_deployment != 'true'
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: 🐍 Set up Python
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
-    - name: 📦 Install dependencies
+    - name: Install dependencies
       run: |
         pip install snowflake-connector-python==3.7.0 python-dotenv
         
-    - name: 🏔️ Deploy Snowflake tables
+    - name: Deploy Snowflake tables
       env:
         SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
         SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
@@ -81,44 +81,44 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: |
-        echo "🚀 Setting up Snowflake external tables..."
+        echo "Setting up Snowflake external tables..."
         python snowflake_connector.py
         
-    - name: ✅ Snowflake deployment summary
+    - name: Snowflake deployment summary
       run: |
-        echo "✅ Snowflake infrastructure deployed successfully!"
-        echo "📊 External tables created for S3 data"
-        echo "🔗 Ready for analytics queries"
+        echo "Snowflake infrastructure deployed successfully!"
+        echo "External tables created for S3 data"
+        echo "Ready for analytics queries"
 
   deploy-aws-glue:
-    name: ⚡ Deploy AWS Glue Jobs
+    name: Deploy AWS Glue Jobs
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event.inputs.skip_deployment != 'true'
     needs: deploy-snowflake
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: 🔧 Configure AWS credentials
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
         
-    - name: 🐍 Set up Python
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
-    - name: 📦 Install AWS CLI and dependencies
+    - name: Install AWS CLI and dependencies
       run: |
         pip install boto3 awscli
         
-    - name: 🗄️ Create Glue Database and Catalog Tables
+    - name: Create Glue Database and Catalog Tables
       run: |
-        echo "🗄️ Creating Glue catalog database and tables..."
+        echo "Creating Glue catalog database and tables..."
         
         # Install required Python packages
         pip install python-dotenv
@@ -128,9 +128,9 @@ jobs:
         
         echo "✅ All catalog tables created successfully!"
         
-    - name: 🔐 Create/Update IAM Role for Glue
+    - name: Create/Update IAM Role for Glue
       run: |
-        echo "🔐 Setting up IAM role for Glue jobs..."
+        echo "Setting up IAM role for Glue jobs..."
         
         # Create trust policy
         cat > trust-policy.json << EOF
@@ -194,9 +194,9 @@ jobs:
           --policy-name IcebergCustomPolicy \
           --policy-document file://iceberg-policy.json || true
         
-    - name: 📤 Upload Glue job scripts to S3
+    - name: Upload Glue job scripts to S3
       run: |
-        echo "📤 Uploading Glue job scripts to S3..."
+        echo "Uploading Glue job scripts to S3..."
         
         # Upload all Glue job scripts
         aws s3 cp glue_jobs/01_raw_data_transformation.py \
@@ -210,9 +210,9 @@ jobs:
         
         echo "✅ All scripts uploaded successfully!"
         
-    - name: ⚡ Create/Update Glue Jobs
+    - name: Create/Update Glue Jobs
       run: |
-        echo "⚡ Creating/updating Glue jobs..."
+        echo "Creating/updating Glue jobs..."
         
         # Get the role ARN
         ROLE_ARN=$(aws iam get-role --role-name ${{ env.GLUE_ROLE_NAME }} --query 'Role.Arn' --output text)
@@ -308,27 +308,27 @@ jobs:
         
     - name: ✅ AWS deployment summary
       run: |
-        echo "✅ AWS Glue infrastructure deployed successfully!"
-        echo "⚡ 3 Glue jobs created and ready to run"
-        echo "🗄️ Data catalog tables configured"
-        echo "🔐 IAM roles and policies configured"
+        echo "AWS Glue infrastructure deployed successfully!"
+        echo "3 Glue jobs created and ready to run"
+        echo "Data catalog tables configured"
+        echo "IAM roles and policies configured"
 
   generate-sql-files:
-    name: 🔧 Generate Snowflake SQL Files
+    name: Generate Snowflake SQL Files
     runs-on: ubuntu-latest
     needs: [deploy-snowflake, deploy-aws-glue]
     if: always() && (needs.deploy-snowflake.result == 'success' || needs.deploy-snowflake.result == 'skipped') && (needs.deploy-aws-glue.result == 'success' || needs.deploy-aws-glue.result == 'skipped')
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: 🐍 Set up Python
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
-    - name: 🎯 Determine target environment
+    - name: Determine target environment
       id: env
       run: |
         if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -341,16 +341,16 @@ jobs:
           ENV="dev"
         fi
         echo "environment=${ENV}" >> $GITHUB_OUTPUT
-        echo "🎯 Target environment: ${ENV}"
+        echo "Target environment: ${ENV}"
         
-    - name: 🔧 Generate SQL files for target environment  
+    - name: Generate SQL files for target environment  
       run: |
         python scripts/generate_snowflake_sql.py ${{ steps.env.outputs.environment }}
         
-    - name: 📊 Create deployment summary
+    - name: Create deployment summary
       run: |
         ENV="${{ steps.env.outputs.environment }}"
-        echo "## 🔧 SQL Generation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## SQL Generation Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Environment:** \`${ENV}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -387,26 +387,26 @@ jobs:
             ;;
         esac
         
-    - name: 📤 Upload generated SQL files as artifacts
+    - name: Upload generated SQL files as artifacts
       uses: actions/upload-artifact@v4
       with:
         name: snowflake-sql-${{ steps.env.outputs.environment }}
         path: generated_sql/${{ steps.env.outputs.environment }}/
         retention-days: 30
         
-    - name: 📋 List generated files
+    - name: List generated files
       run: |
-        echo "🎯 Generated SQL files for ${{ steps.env.outputs.environment }} environment:"
+        echo "Generated SQL files for ${{ steps.env.outputs.environment }} environment:"
         ls -la generated_sql/${{ steps.env.outputs.environment }}/
         echo ""
-        echo "📁 File sizes:"
+        echo "File sizes:"
         du -h generated_sql/${{ steps.env.outputs.environment }}/*
         
-    - name: 💾 Commit generated files to repository
+    - name: Commit generated files to repository
       if: github.event.inputs.commit_generated_files == 'true'
       run: |
         ENV="${{ steps.env.outputs.environment }}"
-        echo "💾 Committing generated SQL files for ${ENV} environment..."
+        echo "Committing generated SQL files for ${ENV} environment..."
         
         # Configure git
         git config --local user.email "action@github.com"
@@ -442,33 +442,33 @@ jobs:
     if: always() && needs.generate-sql-files.result == 'success'
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: 🎯 Determine target environment
+    - name: Determine target environment
       id: env
       run: |
         if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
           ENV="${{ github.event.inputs.environment }}"
         elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-          ENV="prod"
-        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-          ENV="staging"
-        else
           ENV="dev"
+        elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+          ENV="prod"
+        else
+          ENV="staging"
         fi
         echo "environment=${ENV}" >> $GITHUB_OUTPUT
         
-    - name: 📥 Download generated SQL files
+    - name: Download generated SQL files
       uses: actions/download-artifact@v4
       with:
         name: snowflake-sql-${{ steps.env.outputs.environment }}
         path: generated_sql/${{ steps.env.outputs.environment }}/
         
-    - name: 🔍 Validate SQL syntax and content
+    - name: Validate SQL syntax and content
       run: |
         ENV="${{ steps.env.outputs.environment }}"
-        echo "🔍 Validating generated SQL files for ${ENV} environment..."
+        echo "Validating generated SQL files for ${ENV} environment..."
         
         # Check if files were generated
         if [ ! -d "generated_sql/${ENV}" ]; then
@@ -478,7 +478,7 @@ jobs:
         
         # Count generated files
         sql_count=$(find generated_sql/${ENV} -name "*.sql" | wc -l)
-        echo "📊 Found ${sql_count} SQL files"
+        echo "Found ${sql_count} SQL files"
         
         if [ ${sql_count} -eq 0 ]; then
           echo "❌ No SQL files were generated!"
@@ -489,7 +489,7 @@ jobs:
         for sql_file in generated_sql/${ENV}/*.sql; do
           if [ -f "$sql_file" ]; then
             filename=$(basename "$sql_file")
-            echo "🔍 Validating ${filename}..."
+            echo "Validating ${filename}..."
             
             # Check file is not empty
             if [ ! -s "$sql_file" ]; then
@@ -531,9 +531,9 @@ jobs:
           fi
         done
         
-        echo "🎉 All SQL files validated successfully!"
+        echo "All SQL files validated successfully!"
         
-    - name: 📊 Generate validation report
+    - name: Generate validation report
       run: |
         ENV="${{ steps.env.outputs.environment }}"
         echo "## ✅ SQL Validation Report" >> $GITHUB_STEP_SUMMARY
@@ -544,9 +544,9 @@ jobs:
         # File validation summary
         sql_count=$(find generated_sql/${ENV} -name "*.sql" | wc -l)
         echo "### Validation Summary:" >> $GITHUB_STEP_SUMMARY
-        echo "- 📁 **Files Generated:** ${sql_count}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ **Validation Status:** Passed" >> $GITHUB_STEP_SUMMARY
-        echo "- 🎯 **Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
+        echo "- Files Generated:** ${sql_count}" >> $GITHUB_STEP_SUMMARY
+        echo "- Validation Status:** Passed" >> $GITHUB_STEP_SUMMARY
+        echo "- Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         echo "### File Details:" >> $GITHUB_STEP_SUMMARY
@@ -563,29 +563,29 @@ jobs:
         done
 
   deployment-summary:
-    name: 📋 Deployment Summary
+    name: Deployment Summary
     runs-on: ubuntu-latest
     needs: [deploy-snowflake, deploy-aws-glue, generate-sql-files, validate-generated-sql]
     if: always()
     
     steps:
-    - name: 📊 Create final deployment summary
+    - name: Create final deployment summary
       run: |
-        echo "## 🚀 Pipeline Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## Pipeline Deployment Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Job Status:" >> $GITHUB_STEP_SUMMARY
-        echo "- 🏔️  **Snowflake Deployment:** ${{ needs.deploy-snowflake.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ⚡ **AWS Glue Deployment:** ${{ needs.deploy-aws-glue.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- 🔧 **SQL Generation:** ${{ needs.generate-sql-files.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ **SQL Validation:** ${{ needs.validate-generated-sql.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Snowflake Deployment:** ${{ needs.deploy-snowflake.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **AWS Glue Deployment:** ${{ needs.deploy-aws-glue.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **SQL Generation:** ${{ needs.generate-sql-files.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **SQL Validation:** ${{ needs.validate-generated-sql.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Determine overall status
         if [[ "${{ needs.deploy-snowflake.result }}" == "success" && "${{ needs.deploy-aws-glue.result }}" == "success" && "${{ needs.generate-sql-files.result }}" == "success" && "${{ needs.validate-generated-sql.result }}" == "success" ]]; then
-          echo "### 🎉 Overall Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "### Overall Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
           echo "All pipeline components deployed successfully!" >> $GITHUB_STEP_SUMMARY
         elif [[ "${{ needs.generate-sql-files.result }}" == "success" && "${{ needs.validate-generated-sql.result }}" == "success" ]]; then
-          echo "### ✅ Overall Status: SQL GENERATION SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "### Overall Status: SQL GENERATION SUCCESS" >> $GITHUB_STEP_SUMMARY
           echo "SQL files generated and validated successfully!" >> $GITHUB_STEP_SUMMARY
         else
           echo "### ⚠️  Overall Status: PARTIAL SUCCESS" >> $GITHUB_STEP_SUMMARY
