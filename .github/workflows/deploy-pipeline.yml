@@ -451,6 +451,14 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
+        # Get the current branch name
+        CURRENT_BRANCH="${{ github.ref_name }}"
+        echo "Current branch: ${CURRENT_BRANCH}"
+        
+        # Ensure we're on the correct branch (fix detached HEAD)
+        git fetch origin
+        git checkout "${CURRENT_BRANCH}" || git checkout -b "${CURRENT_BRANCH}"
+        
         # Add generated files
         git add generated_sql/${ENV}/
         
@@ -469,13 +477,13 @@ jobs:
           Files generated:
           $(find generated_sql/${ENV} -name "*.sql" -exec basename {} \; | sort)"
           
-          # Push changes
-          git push
+          # Push changes to the correct branch
+          git push origin "${CURRENT_BRANCH}"
           echo "✅ Generated SQL files committed and pushed successfully!"
         fi
         
   validate-generated-sql:
-    name: ✅ Validate Generated SQL
+    name: Validate Generated SQL
     runs-on: ubuntu-latest
     needs: generate-sql-files
     if: always() && needs.generate-sql-files.result == 'success'
@@ -629,4 +637,4 @@ jobs:
         else
           echo "### ⚠️  Overall Status: PARTIAL SUCCESS" >> $GITHUB_STEP_SUMMARY
           echo "Some components may have failed. Check individual job logs." >> $GITHUB_STEP_SUMMARY
-        fi 
+        fi
