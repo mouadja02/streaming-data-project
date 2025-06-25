@@ -8,8 +8,8 @@
 -- BASIC VIEW USAGE EXAMPLES
 -- -------------------------------------------------------------------------
 
--- Get overall user overview
-SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_BRONZE_USER_OVERVIEW;
+-- Get overall comparaison between bronze and silver layers
+SELECT * FROM ECOMMERCE_DB.GOLD_LAYER.VW_BRONZE_VS_SILVER_COMPLETENESS;
 
 -- View top 10 countries by user count
 SELECT * FROM ${SNOWFLAKE_DATABASE}.GOLD_LAYER.VW_TOP_COUNTRIES LIMIT 10;
@@ -509,21 +509,23 @@ ORDER BY table_name;
 SHOW VIEWS IN SCHEMA ${SNOWFLAKE_DATABASE}.GOLD_LAYER;
 
 -- Count of views by category
+-- Count of views by category
 SELECT 
     CASE 
-        WHEN "name" LIKE '%REGISTRATION%' THEN 'Registration Analysis'
-        WHEN "name" LIKE '%GEOGRAPHIC%' OR "name" LIKE '%COUNTRY%' THEN 'Geographic Analysis'
-        WHEN "name" LIKE '%AGE%' OR "name" LIKE '%DEMOGRAPHIC%' OR "name" LIKE '%GENERATION%' THEN 'Demographic Analysis'
-        WHEN "name" LIKE '%QUALITY%' THEN 'Quality Analysis'
-        WHEN "name" LIKE '%ANOMAL%' THEN 'Anomaly Detection'
-        WHEN "name" LIKE '%EXECUTIVE%' OR "name" LIKE '%DASHBOARD%' OR "name" LIKE '%SUMMARY%' THEN 'Executive Dashboards'
-        WHEN "name" LIKE '%EMAIL%' THEN 'Email Analysis'
+        WHEN TABLE_NAME LIKE '%REGISTRATION%' THEN 'Registration Analysis'
+        WHEN TABLE_NAME LIKE '%GEOGRAPHIC%' OR TABLE_NAME LIKE '%COUNTRY%' THEN 'Geographic Analysis'
+        WHEN TABLE_NAME LIKE '%AGE%' OR TABLE_NAME LIKE '%DEMOGRAPHIC%' OR TABLE_NAME LIKE '%GENERATION%' THEN 'Demographic Analysis'
+        WHEN TABLE_NAME LIKE '%QUALITY%' THEN 'Quality Analysis'
+        WHEN TABLE_NAME LIKE '%ANOMAL%' THEN 'Anomaly Detection'
+        WHEN TABLE_NAME LIKE '%EXECUTIVE%' OR TABLE_NAME LIKE '%DASHBOARD%' OR TABLE_NAME LIKE '%SUMMARY%' THEN 'Executive Dashboards'
+        WHEN TABLE_NAME LIKE '%EMAIL%' THEN 'Email Analysis'
         ELSE 'Other Analytics'
     END as view_category,
     COUNT(*) as view_count
-FROM (SHOW VIEWS IN SCHEMA ${SNOWFLAKE_DATABASE}.GOLD_LAYER)
+FROM (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA = 'GOLD_LAYER')
 GROUP BY view_category
 ORDER BY view_count DESC;
+
 
 -- Get view definitions (useful for documentation)
 -- Note: Replace view name as needed
