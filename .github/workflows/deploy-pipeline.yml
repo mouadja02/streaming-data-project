@@ -40,7 +40,7 @@ env:
   GLUE_ROLE_NAME: data-engineer-user
   GLUE_DATABASE_NAME: data_pipeline_db
   S3_SCRIPTS_PREFIX: glue-scripts/
-  # SQL Generation environment variables (no credentials)
+  # SQL Generation environment variables (EXAMPLE)
   SNOWFLAKE_DATABASE_DEV: "ECOMMERCE_DB"
   SNOWFLAKE_DATABASE_STAGING: "ECOMMERCE_STAGING_DB" 
   SNOWFLAKE_DATABASE_PROD: "ECOMMERCE_PROD_DB"
