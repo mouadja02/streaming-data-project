@@ -1,7 +1,68 @@
+# Environment and credentials
 .env
+.env.*
+!.env.example
+
+# Python virtual environments
 pyvenv.cfg
-venv
-output
-tmp
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Project output directories
+output/
+tmp/
+logs/
+
+# Generated SQL files (optional - uncomment if you don't want to track them)
+# generated_sql/
+
+# Backup files
 dbt_*
 *.bkp
+*.backup
+*_backup_*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Docker
+.dockerignore
+
+# Terraform (if used)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Local development
+local_*
+test_*
+debug_*

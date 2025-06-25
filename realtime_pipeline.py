@@ -343,8 +343,8 @@ def run_producer_process():
         start_time = time.time()
         record_count = 0
         
-        logging.info(f"Streaming data to '{topic_name}' for 180 seconds.")
-        while time.time() < start_time + 180:
+        logging.info(f"Streaming data to '{topic_name}' for 600 seconds.")
+        while time.time() < start_time + 600:
             raw_data = get_data()
             if raw_data:
                 formatted_data = format_data(raw_data)

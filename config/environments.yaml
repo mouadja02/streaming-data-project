@@ -1,0 +1,111 @@
+# Environment Configuration for Snowflake SQL Generation
+# ========================================================
+# This file contains environment-specific configurations for generating
+# Snowflake SQL files from templates.
+
+environments:
+  dev:
+    name: "Development"
+    description: "Development environment for testing and development"
+    snowflake:
+      database: "ECOMMERCE_DEV_DB"
+      warehouse: "COMPUTE_WH_DEV" 
+      schema_prefix: "DEV_"
+    aws:
+      s3_bucket: "my-amazing-app-dev"
+      region: "us-east-1"
+    features:
+      auto_refresh: true
+      debug_mode: true
+      sample_data: true
+
+  staging:
+    name: "Staging"
+    description: "Staging environment for pre-production testing"
+    snowflake:
+      database: "ECOMMERCE_STAGING_DB"
+      warehouse: "COMPUTE_WH_STAGING"
+      schema_prefix: "STAGING_"
+    aws:
+      s3_bucket: "my-amazing-app-staging"
+      region: "us-east-1"
+    features:
+      auto_refresh: true
+      debug_mode: false
+      sample_data: false
+
+  prod:
+    name: "Production"
+    description: "Production environment for live data processing"
+    snowflake:
+      database: "ECOMMERCE_PROD_DB"
+      warehouse: "COMPUTE_WH_PROD"
+      schema_prefix: "PROD_"
+    aws:
+      s3_bucket: "my-amazing-app-prod"
+      region: "us-east-1"
+    features:
+      auto_refresh: true
+      debug_mode: false
+      sample_data: false
+
+# Template file configurations
+templates:
+  files:
+    - name: "02_create_file_formats.sql"
+      description: "File formats for Parquet data"
+      category: "setup"
+      order: 1
+    
+    - name: "03_bronze_layer.sql" 
+      description: "External tables (Bronze layer)"
+      category: "bronze"
+      order: 2
+      
+    - name: "04_bronze_checks.sql"
+      description: "Data validation and quality checks"
+      category: "validation"
+      order: 3
+      
+    - name: "05_silver_layer.sql"
+      description: "Iceberg tables (Silver layer)"
+      category: "silver"
+      order: 4
+      
+    - name: "06_gold_layer.sql"
+      description: "Analytics views (Gold layer)"
+      category: "gold"
+      order: 5
+      
+    - name: "07_final_checks.sql"
+      description: "Final validation and examples"
+      category: "validation"
+      order: 6
+
+# Variable mappings for template replacement
+variable_mappings:
+  SNOWFLAKE_DATABASE: "snowflake.database"
+  SNOWFLAKE_WAREHOUSE: "snowflake.warehouse"
+  S3_BUCKET_NAME: "aws.s3_bucket"
+
+# Generation settings
+generation:
+  output_directory: "generated_sql"
+  include_header: true
+  include_readme: true
+  backup_existing: false
+  
+# Validation rules
+validation:
+  check_syntax: true
+  check_variables: true
+  check_environment_values: true
+  required_keywords:
+    - "CREATE"
+    - "SELECT"
+  
+# Documentation settings
+documentation:
+  include_execution_order: true
+  include_variable_table: true
+  include_regeneration_instructions: true 

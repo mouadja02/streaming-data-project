@@ -1,0 +1,418 @@
+name: Generate Snowflake SQL Files
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'snowflake/**'
+      - '.github/workflows/generate-snowflake-sql.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'snowflake/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+
+env:
+  # Default environment variables (no credentials)
+  SNOWFLAKE_DATABASE_DEV: "ECOMMERCE_DEV_DB"
+  SNOWFLAKE_DATABASE_STAGING: "ECOMMERCE_STAGING_DB" 
+  SNOWFLAKE_DATABASE_PROD: "ECOMMERCE_PROD_DB"
+  SNOWFLAKE_WAREHOUSE_DEV: "COMPUTE_WH_DEV"
+  SNOWFLAKE_WAREHOUSE_STAGING: "COMPUTE_WH_STAGING"
+  SNOWFLAKE_WAREHOUSE_PROD: "COMPUTE_WH_PROD"
+  S3_BUCKET_DEV: "my-amazing-app-dev"
+  S3_BUCKET_STAGING: "my-amazing-app-staging"
+  S3_BUCKET_PROD: "my-amazing-app-prod"
+
+jobs:
+  generate-sql-files:
+    name: 🔧 Generate Snowflake SQL Files
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install dependencies
+      run: |
+        pip install jinja2 pyyaml
+        
+    - name: 🎯 Determine target environment
+      id: env
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          ENV="${{ github.event.inputs.environment }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          ENV="prod"
+        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          ENV="staging"
+        else
+          ENV="dev"
+        fi
+        echo "environment=${ENV}" >> $GITHUB_OUTPUT
+        echo "🎯 Target environment: ${ENV}"
+        
+    - name: 📝 Create SQL generation script
+      run: |
+        cat > generate_sql.py << 'EOF'
+        #!/usr/bin/env python3
+        import os
+        import sys
+        from pathlib import Path
+        
+        def replace_variables(content, variables):
+            """Replace variables in SQL content"""
+            for key, value in variables.items():
+                # Replace ${VAR_NAME} format
+                content = content.replace(f"${{{key}}}", value)
+                # Replace $VAR_NAME format  
+                content = content.replace(f"${key}", value)
+            return content
+        
+        def generate_sql_files(environment):
+            """Generate SQL files for specific environment"""
+            
+            # Define environment-specific variables
+            env_vars = {
+                'dev': {
+                    'SNOWFLAKE_DATABASE': os.getenv('SNOWFLAKE_DATABASE_DEV'),
+                    'SNOWFLAKE_WAREHOUSE': os.getenv('SNOWFLAKE_WAREHOUSE_DEV'),
+                    'S3_BUCKET_NAME': os.getenv('S3_BUCKET_DEV'),
+                },
+                'staging': {
+                    'SNOWFLAKE_DATABASE': os.getenv('SNOWFLAKE_DATABASE_STAGING'),
+                    'SNOWFLAKE_WAREHOUSE': os.getenv('SNOWFLAKE_WAREHOUSE_STAGING'),
+                    'S3_BUCKET_NAME': os.getenv('S3_BUCKET_STAGING'),
+                },
+                'prod': {
+                    'SNOWFLAKE_DATABASE': os.getenv('SNOWFLAKE_DATABASE_PROD'),
+                    'SNOWFLAKE_WAREHOUSE': os.getenv('SNOWFLAKE_WAREHOUSE_PROD'),
+                    'S3_BUCKET_NAME': os.getenv('S3_BUCKET_PROD'),
+                }
+            }
+            
+            if environment not in env_vars:
+                print(f"❌ Unknown environment: {environment}")
+                sys.exit(1)
+                
+            variables = env_vars[environment]
+            
+            # SQL template files to process
+            template_files = [
+                '02_create_file_formats.sql',
+                '03_bronze_layer.sql', 
+                '04_bronze_checks.sql',
+                '05_silver_layer.sql',
+                '06_gold_layer.sql',
+                '07_final_checks.sql'
+            ]
+            
+            # Create output directory
+            output_dir = Path(f'generated_sql/{environment}')
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Process each template file
+            for template_file in template_files:
+                template_path = Path('snowflake') / template_file
+                
+                if not template_path.exists():
+                    print(f"⚠️  Template file not found: {template_path}")
+                    continue
+                    
+                print(f"📝 Processing {template_file}...")
+                
+                # Read template content
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Replace variables
+                processed_content = replace_variables(content, variables)
+                
+                # Add header comment
+                header = f"""-- =========================================================================
+-- Generated Snowflake SQL for {environment.upper()} environment
+-- =========================================================================
+-- Generated on: {os.popen('date').read().strip()}
+-- Environment: {environment}
+-- Database: {variables['SNOWFLAKE_DATABASE']}
+-- Warehouse: {variables['SNOWFLAKE_WAREHOUSE']}
+-- S3 Bucket: {variables['S3_BUCKET_NAME']}
+-- =========================================================================
+
+"""
+                
+                final_content = header + processed_content
+                
+                # Write processed file
+                output_file = output_dir / template_file
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(final_content)
+                    
+                print(f"✅ Generated {output_file}")
+            
+            # Create environment-specific README
+            readme_content = f"""# Generated Snowflake SQL Files - {environment.upper()} Environment
+
+This directory contains the generated Snowflake SQL files for the **{environment}** environment.
+
+## Environment Configuration
+
+- **Database**: `{variables['SNOWFLAKE_DATABASE']}`
+- **Warehouse**: `{variables['SNOWFLAKE_WAREHOUSE']}`
+- **S3 Bucket**: `{variables['S3_BUCKET_NAME']}`
+
+## Files
+
+1. **02_create_file_formats.sql** - File formats for Parquet data
+2. **03_bronze_layer.sql** - External tables (Bronze layer)
+3. **04_bronze_checks.sql** - Data validation and quality checks
+4. **05_silver_layer.sql** - Iceberg tables (Silver layer)
+5. **06_gold_layer.sql** - Analytics views (Gold layer)
+6. **07_final_checks.sql** - Final validation and examples
+
+## Execution Order
+
+Execute the files in the order listed above:
+
+```sql
+-- 1. Set up file formats
+@02_create_file_formats.sql
+
+-- 2. Create bronze layer tables
+@03_bronze_layer.sql
+
+-- 3. Validate bronze layer data
+@04_bronze_checks.sql
+
+-- 4. Create silver layer tables
+@05_silver_layer.sql
+
+-- 5. Create gold layer views
+@06_gold_layer.sql
+
+-- 6. Run final checks and examples
+@07_final_checks.sql
+```
+
+## Notes
+
+- These files are automatically generated from templates
+- Do not edit these files directly - modify the templates instead
+- All variables have been replaced with environment-specific values
+- No credentials are included in these files
+"""
+            
+            readme_path = output_dir / 'README.md'
+            with open(readme_path, 'w', encoding='utf-8') as f:
+                f.write(readme_content)
+                
+            print(f"✅ Generated {readme_path}")
+            print(f"🎉 All SQL files generated successfully for {environment} environment!")
+            
+        if __name__ == "__main__":
+            env = sys.argv[1] if len(sys.argv) > 1 else 'dev'
+            generate_sql_files(env)
+        EOF
+        
+    - name: 🔧 Generate SQL files for target environment  
+      run: |
+        python generate_sql.py ${{ steps.env.outputs.environment }}
+        
+    - name: 📊 Create deployment summary
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "## 🔧 SQL Generation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** \`${ENV}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Generated Files:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -d "generated_sql/${ENV}" ]; then
+          for file in generated_sql/${ENV}/*.sql; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "Unknown")
+              echo "- ✅ \`${filename}\` (${size} bytes)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Environment Configuration:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        case ${ENV} in
+          "dev")
+            echo "- **Database:** \`${{ env.SNOWFLAKE_DATABASE_DEV }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warehouse:** \`${{ env.SNOWFLAKE_WAREHOUSE_DEV }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **S3 Bucket:** \`${{ env.S3_BUCKET_DEV }}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+          "staging")
+            echo "- **Database:** \`${{ env.SNOWFLAKE_DATABASE_STAGING }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warehouse:** \`${{ env.SNOWFLAKE_WAREHOUSE_STAGING }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **S3 Bucket:** \`${{ env.S3_BUCKET_STAGING }}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+          "prod")
+            echo "- **Database:** \`${{ env.SNOWFLAKE_DATABASE_PROD }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Warehouse:** \`${{ env.SNOWFLAKE_WAREHOUSE_PROD }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **S3 Bucket:** \`${{ env.S3_BUCKET_PROD }}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+        esac
+        
+    - name: 📤 Upload generated SQL files as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: snowflake-sql-${{ steps.env.outputs.environment }}
+        path: generated_sql/${{ steps.env.outputs.environment }}/
+        retention-days: 30
+        
+    - name: 📋 List generated files
+      run: |
+        echo "🎯 Generated SQL files for ${{ steps.env.outputs.environment }} environment:"
+        ls -la generated_sql/${{ steps.env.outputs.environment }}/
+        echo ""
+        echo "📁 File sizes:"
+        du -h generated_sql/${{ steps.env.outputs.environment }}/*
+        
+  validate-generated-sql:
+    name: ✅ Validate Generated SQL
+    runs-on: ubuntu-latest
+    needs: generate-sql-files
+    if: always() && needs.generate-sql-files.result == 'success'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🎯 Determine target environment
+      id: env
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          ENV="${{ github.event.inputs.environment }}"
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          ENV="prod"
+        elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          ENV="staging"
+        else
+          ENV="dev"
+        fi
+        echo "environment=${ENV}" >> $GITHUB_OUTPUT
+        
+    - name: 📥 Download generated SQL files
+      uses: actions/download-artifact@v4
+      with:
+        name: snowflake-sql-${{ steps.env.outputs.environment }}
+        path: generated_sql/${{ steps.env.outputs.environment }}/
+        
+    - name: 🔍 Validate SQL syntax and content
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "🔍 Validating generated SQL files for ${ENV} environment..."
+        
+        # Check if files were generated
+        if [ ! -d "generated_sql/${ENV}" ]; then
+          echo "❌ Generated SQL directory not found!"
+          exit 1
+        fi
+        
+        # Count generated files
+        sql_count=$(find generated_sql/${ENV} -name "*.sql" | wc -l)
+        echo "📊 Found ${sql_count} SQL files"
+        
+        if [ ${sql_count} -eq 0 ]; then
+          echo "❌ No SQL files were generated!"
+          exit 1
+        fi
+        
+        # Validate each SQL file
+        for sql_file in generated_sql/${ENV}/*.sql; do
+          if [ -f "$sql_file" ]; then
+            filename=$(basename "$sql_file")
+            echo "🔍 Validating ${filename}..."
+            
+            # Check file is not empty
+            if [ ! -s "$sql_file" ]; then
+              echo "❌ ${filename} is empty!"
+              exit 1
+            fi
+            
+            # Check for template variables that weren't replaced
+            if grep -q '\${' "$sql_file"; then
+              echo "⚠️  ${filename} contains unreplaced variables:"
+              grep '\${' "$sql_file" || true
+            fi
+            
+            # Basic SQL syntax check (look for common keywords)
+            if ! grep -qi -E "(CREATE|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER)" "$sql_file"; then
+              echo "⚠️  ${filename} might not contain valid SQL statements"
+            fi
+            
+            # Check for environment-specific values
+            case ${ENV} in
+              "dev")
+                if ! grep -q "DEV" "$sql_file"; then
+                  echo "⚠️  ${filename} might not contain DEV environment values"
+                fi
+                ;;
+              "staging")
+                if ! grep -q "STAGING" "$sql_file"; then
+                  echo "⚠️  ${filename} might not contain STAGING environment values"
+                fi
+                ;;
+              "prod")
+                if ! grep -q "PROD" "$sql_file"; then
+                  echo "⚠️  ${filename} might not contain PROD environment values"
+                fi
+                ;;
+            esac
+            
+            echo "✅ ${filename} validation completed"
+          fi
+        done
+        
+        echo "🎉 All SQL files validated successfully!"
+        
+    - name: 📊 Generate validation report
+      run: |
+        ENV="${{ steps.env.outputs.environment }}"
+        echo "## ✅ SQL Validation Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** \`${ENV}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # File validation summary
+        sql_count=$(find generated_sql/${ENV} -name "*.sql" | wc -l)
+        echo "### Validation Summary:" >> $GITHUB_STEP_SUMMARY
+        echo "- 📁 **Files Generated:** ${sql_count}" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ **Validation Status:** Passed" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎯 **Environment:** ${ENV}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### File Details:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| File | Size | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|------|--------|" >> $GITHUB_STEP_SUMMARY
+        
+        for sql_file in generated_sql/${ENV}/*.sql; do
+          if [ -f "$sql_file" ]; then
+            filename=$(basename "$sql_file")
+            size=$(stat -f%z "$sql_file" 2>/dev/null || stat -c%s "$sql_file" 2>/dev/null || echo "Unknown")
+            echo "| \`${filename}\` | ${size} bytes | ✅ Valid |" >> $GITHUB_STEP_SUMMARY
+          fi
+        done 

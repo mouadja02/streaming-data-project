@@ -5,7 +5,7 @@
     "users_transformed": {
       "job": "data-pipeline-raw-transformation",
       "description": "Transformed and enriched user data from raw transformation job",
-      "location": "s3://my-amazing-app/iceberg-warehouse/users_transformed_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/users_transformed/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "id", "type": "string", "comment": "User unique identifier"},
@@ -44,7 +44,7 @@
     "data_quality_summary": {
       "job": "data-pipeline-raw-transformation",
       "description": "Data quality summary metrics",
-      "location": "s3://my-amazing-app/iceberg-warehouse/data_quality_summary_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/data_quality_summary/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "total_records", "type": "bigint", "comment": "Total number of records"},
@@ -64,7 +64,7 @@
     "dim_user_demographics": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "User demographics dimension table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/dim_user_demographics_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/dim_user_demographics/",
       "partitions": ["target_segment"],
       "columns": [
         {"name": "user_id", "type": "string", "comment": "User identifier"},
@@ -87,7 +87,7 @@
     "fact_geographic_analysis": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "Geographic analysis fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_geographic_analysis_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_geographic_analysis/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "geographic_level", "type": "string", "comment": "Geographic level (country, city)"},
@@ -107,7 +107,7 @@
     "fact_age_generation_analysis": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "Age and generation analysis fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_age_generation_analysis_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_age_generation_analysis/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "age_group", "type": "string", "comment": "Age group category"},
@@ -135,7 +135,7 @@
     "fact_email_provider_analysis": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "Email provider analysis fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_email_provider_analysis_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_email_provider_analysis/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "email_provider_type", "type": "string", "comment": "Email provider type"},
@@ -152,7 +152,7 @@
     "fact_email_domain_analysis": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "Email domain analysis fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_email_domain_analysis_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_email_domain_analysis/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "email_domain", "type": "string", "comment": "Email domain"},
@@ -174,7 +174,7 @@
     "fact_data_quality_metrics": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "Data quality metrics fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_data_quality_metrics_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_data_quality_metrics/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "total_records", "type": "bigint", "comment": "Total records"},
@@ -202,7 +202,7 @@
     "fact_quality_by_segment": {
       "job": "data-pipeline-analytics-aggregation",
       "description": "Quality by segment fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_quality_by_segment_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_quality_by_segment/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "age_group", "type": "string", "comment": "Age group"},
@@ -220,7 +220,7 @@
     "fact_registration_trends": {
       "job": "data-pipeline-time-series-analysis",
       "description": "Registration trends fact table with time-based analysis",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_registration_trends_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_registration_trends/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "time_period", "type": "string", "comment": "Time period (YYYY-MM, YYYY-QX, or day name)"},
@@ -240,7 +240,7 @@
     "fact_geographic_expansion": {
       "job": "data-pipeline-time-series-analysis",
       "description": "Geographic expansion trends fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_geographic_expansion_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_geographic_expansion/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "country", "type": "string", "comment": "Country name"},
@@ -264,7 +264,7 @@
     "fact_age_demographic_trends": {
       "job": "data-pipeline-time-series-analysis",
       "description": "Age demographic trends fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_age_demographic_trends_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_age_demographic_trends/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "age_group", "type": "string", "comment": "Age group category"},
@@ -285,7 +285,7 @@
     "fact_data_quality_trends": {
       "job": "data-pipeline-time-series-analysis",
       "description": "Data quality trends fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_data_quality_trends_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_data_quality_trends/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "processing_date", "type": "date", "comment": "Processing date"},
@@ -310,7 +310,7 @@
     "fact_registration_anomalies": {
       "job": "data-pipeline-time-series-analysis",
       "description": "Registration anomalies detection fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_registration_anomalies_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_registration_anomalies/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "time_period", "type": "string", "comment": "Time period"},
@@ -334,7 +334,7 @@
     "fact_quality_anomalies": {
       "job": "data-pipeline-time-series-analysis",
       "description": "Quality anomalies detection fact table",
-      "location": "s3://my-amazing-app/iceberg-warehouse/fact_quality_anomalies_parquet/",
+      "location": "s3://my-amazing-app/iceberg-warehouse/fact_quality_anomalies/",
       "partitions": ["processing_date"],
       "columns": [
         {"name": "processing_date", "type": "date", "comment": "Processing date"},

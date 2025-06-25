@@ -392,16 +392,16 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
     
     # Map table names to S3 locations to match catalog setup
     table_locations = {
-        "fact_registration_trends": f"{args['S3_OUTPUT_PATH']}/fact_registration_trends_parquet/",
-        "fact_geographic_expansion": f"{args['S3_OUTPUT_PATH']}/fact_geographic_expansion_parquet/",
-        "fact_age_demographic_trends": f"{args['S3_OUTPUT_PATH']}/fact_age_demographic_trends_parquet/",
-        "fact_data_quality_trends": f"{args['S3_OUTPUT_PATH']}/fact_data_quality_trends_parquet/",
-        "fact_registration_anomalies": f"{args['S3_OUTPUT_PATH']}/fact_registration_anomalies_parquet/",
-        "fact_quality_anomalies": f"{args['S3_OUTPUT_PATH']}/fact_quality_anomalies_parquet/"
+        "fact_registration_trends": f"{args['S3_OUTPUT_PATH']}/fact_registration_trends/",
+        "fact_geographic_expansion": f"{args['S3_OUTPUT_PATH']}/fact_geographic_expansion/",
+        "fact_age_demographic_trends": f"{args['S3_OUTPUT_PATH']}/fact_age_demographic_trends/",
+        "fact_data_quality_trends": f"{args['S3_OUTPUT_PATH']}/fact_data_quality_trends/",
+        "fact_registration_anomalies": f"{args['S3_OUTPUT_PATH']}/fact_registration_anomalies/",
+        "fact_quality_anomalies": f"{args['S3_OUTPUT_PATH']}/fact_quality_anomalies/"
     }
     
     # Get the S3 location for this table
-    s3_location = table_locations.get(table_name, f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/")
+    s3_location = table_locations.get(table_name, f"{args['S3_OUTPUT_PATH']}/{table_name}/")
     
     full_table_name = f"glue_catalog.{args['CATALOG_DATABASE']}.{table_name}"
     
@@ -460,7 +460,7 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
         except Exception as e2:
             print(f"❌ Alternative method also failed: {str(e2)}")
             # Final fallback to Parquet
-            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
+            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}/"
             print(f"Final fallback to Parquet at: {fallback_path}")
             df.write.mode(write_mode).parquet(fallback_path)
 
@@ -482,7 +482,7 @@ def main():
         except:
             # Fallback to S3 Parquet files
             print("Fallback: Reading from S3 Parquet files...")
-            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_transformed_parquet/")
+            users_df = spark.read.parquet(f"{args['S3_INPUT_PATH']}/iceberg-warehouse/users_cleaned_transformed/data/")
         
         print(f"Input data count: {users_df.count()} records")
         

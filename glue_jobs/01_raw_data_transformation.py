@@ -260,13 +260,13 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
     
     # Map table names to S3 locations to match catalog setup
     table_locations = {
-        "users_transformed": f"{args['S3_OUTPUT_PATH']}/users_transformed_parquet/",
-        "data_quality_summary": f"{args['S3_OUTPUT_PATH']}/data_quality_summary_parquet/",
+        "users_transformed": f"{args['S3_OUTPUT_PATH']}/users_transformed/",
+        "data_quality_summary": f"{args['S3_OUTPUT_PATH']}/data_quality_summary/",
         "users_cleaned": f"{args['S3_OUTPUT_PATH']}/users_transformed/"
     }
     
     # Get the S3 location for this table
-    s3_location = table_locations.get(table_name, f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/")
+    s3_location = table_locations.get(table_name, f"{args['S3_OUTPUT_PATH']}/{table_name}/")
     
     # Create table identifier
     full_table_name = f"glue_catalog.{args['CATALOG_DATABASE']}.{table_name}"
@@ -321,7 +321,7 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
         except Exception as e2:
             print(f"❌ Alternative method also failed: {str(e2)}")
             # Final fallback to Parquet
-            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
+            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}/"
             print(f"Final fallback to Parquet format at: {fallback_path}")
             df.write.mode(write_mode).parquet(fallback_path)
 

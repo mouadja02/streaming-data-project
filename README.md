@@ -64,7 +64,9 @@ The project implements a multi-layer data pipeline following the medallion archi
 - **Snowflake connectivity** and data consumption layer
 - **Real-time streaming** pipeline foundation with Kafka
 - **Data quality framework** with scoring and validation
-- **Simple automated deployment** via GitHub Actions CI/CD
+- **Environment-specific SQL generation** from templates
+- **Automated CI/CD deployment** via GitHub Actions
+- **Multi-environment support** (dev, staging, prod)
 
 ### 🔄 Planned Enhancements
 
@@ -82,6 +84,7 @@ The project implements a multi-layer data pipeline following the medallion archi
 - Docker and Docker Compose
 - Python 3.8+
 - AWS CLI configured (optional for cloud features)
+- Make (optional, for convenient commands)
 
 ### Step 1: Environment Setup
 ```bash
@@ -89,7 +92,10 @@ The project implements a multi-layer data pipeline following the medallion archi
 git clone <your-repo-url>
 cd data-project-1
 
-# Install dependencies
+# Quick setup with Make (recommended)
+make quick-setup
+
+# OR manual setup
 pip install -r requirements.txt
 
 # Configure environment (optional for cloud features)
@@ -100,7 +106,21 @@ cp env.example .env
 docker-compose up -d
 ```
 
-### Step 2: Run the Data Pipeline
+### Step 2: Generate Environment-Specific SQL Files
+```bash
+# Generate SQL files for all environments
+make generate-all-sql
+
+# OR generate for specific environment
+make generate-sql ENV=dev     # Development
+make generate-sql ENV=staging # Staging  
+make generate-sql ENV=prod    # Production
+
+# OR use Python script directly
+python scripts/generate_snowflake_sql.py dev
+```
+
+### Step 3: Run the Data Pipeline
 ```bash
 # Execute the complete pipeline
 python realtime_pipeline.py
@@ -112,7 +132,20 @@ python scripts/setup_all_catalog_tables.py
 python scripts/run_glue_jobs.py
 ```
 
-### Step 3: Verify Results
+### Step 4: Deploy Snowflake Components
+```bash
+# Use generated SQL files for your environment
+# Example for dev environment:
+# Execute files in generated_sql/dev/ in order:
+# 1. 02_create_file_formats.sql
+# 2. 03_bronze_layer.sql  
+# 3. 04_bronze_checks.sql
+# 4. 05_silver_layer.sql
+# 5. 06_gold_layer.sql
+# 6. 07_final_checks.sql
+```
+
+### Step 5: Verify Results
 ```bash
 # Check local output
 ls -la output/
@@ -120,8 +153,11 @@ ls -la output/
 # Validate AWS Glue tables (if configured)
 python scripts/validate_setup.py
 
-# Run Snowflake analytics (if configured)
-# Follow instructions in snowflake/README.md
+# Check generated SQL files
+make test-sql
+
+# Show project status
+make status
 ```
 
 ## Data Schema & Quality Framework
@@ -171,9 +207,125 @@ data-project-1/
 ├── 
 ├── docs/                          # Documentation
 │   └── catalog_table_schemas.json
-└── 
+├── 
+├── config/                        # Configuration files
+│   └── environments.yaml         # Environment-specific settings
+├── 
+├── generated_sql/                 # Generated SQL files (auto-created)
+│   ├── dev/                      # Development environment SQL
+│   ├── staging/                  # Staging environment SQL
+│   └── prod/                     # Production environment SQL
+├── 
+├── .github/workflows/             # CI/CD workflows
+│   ├── deploy-pipeline.yml       # Main deployment pipeline
+│   └── generate-snowflake-sql.yml # SQL generation workflow
+├── 
+├── Makefile                       # Convenient project commands
 └── output/                        # Local data output
 ```
+
+## Environment-Specific SQL Generation
+
+### Overview
+The project includes an automated system for generating environment-specific Snowflake SQL files from templates. This ensures consistency across environments while allowing for environment-specific configurations.
+
+### Features
+- **Template-based generation**: SQL files are generated from templates with variable substitution
+- **Multi-environment support**: Separate configurations for dev, staging, and prod
+- **Automated validation**: Generated files are validated for syntax and completeness
+- **CI/CD integration**: Automatic generation via GitHub Actions
+- **Local development**: Command-line tools for local SQL generation
+
+### Usage
+
+#### Using Make Commands (Recommended)
+```bash
+# Generate SQL for all environments
+make generate-all-sql
+
+# Generate SQL for specific environment
+make generate-sql ENV=dev
+make generate-sql ENV=staging  
+make generate-sql ENV=prod
+
+# View environment configurations
+make show-config
+
+# List available templates
+make list-templates
+
+# Validate templates
+make validate-templates
+
+# Clean generated files
+make clean
+```
+
+#### Using Python Script Directly
+```bash
+# Generate SQL files
+python scripts/generate_snowflake_sql.py dev
+python scripts/generate_snowflake_sql.py staging
+python scripts/generate_snowflake_sql.py prod
+
+# Show available options
+python scripts/generate_snowflake_sql.py --help
+python scripts/generate_snowflake_sql.py --show-config
+python scripts/generate_snowflake_sql.py --list-templates
+```
+
+### Environment Configuration
+
+Each environment has specific configurations defined in `config/environments.yaml`:
+
+| Environment | Database | Warehouse | S3 Bucket |
+|-------------|----------|-----------|-----------|
+| **dev** | `ECOMMERCE_DEV_DB` | `COMPUTE_WH_DEV` | `my-amazing-app-dev` |
+| **staging** | `ECOMMERCE_STAGING_DB` | `COMPUTE_WH_STAGING` | `my-amazing-app-staging` |
+| **prod** | `ECOMMERCE_PROD_DB` | `COMPUTE_WH_PROD` | `my-amazing-app-prod` |
+
+### Generated Files Structure
+```
+generated_sql/
+├── dev/
+│   ├── README.md                 # Environment-specific documentation
+│   ├── 02_create_file_formats.sql
+│   ├── 03_bronze_layer.sql
+│   ├── 04_bronze_checks.sql
+│   ├── 05_silver_layer.sql
+│   ├── 06_gold_layer.sql
+│   └── 07_final_checks.sql
+├── staging/
+│   └── [same structure as dev]
+└── prod/
+    └── [same structure as dev]
+```
+
+### CI/CD Integration
+
+The project includes a GitHub Actions workflow (`.github/workflows/generate-snowflake-sql.yml`) that:
+- Automatically generates SQL files when templates change
+- Validates generated files for syntax and completeness
+- Creates artifacts for each environment
+- Provides detailed reporting and summaries
+
+### Template Variables
+
+The following variables are automatically replaced in templates:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `${SNOWFLAKE_DATABASE}` | Target database name | `ECOMMERCE_DEV_DB` |
+| `${SNOWFLAKE_WAREHOUSE}` | Compute warehouse | `COMPUTE_WH_DEV` |
+| `${S3_BUCKET_NAME}` | S3 bucket for data | `my-amazing-app-dev` |
+
+### Best Practices
+
+1. **Never edit generated files directly** - Always modify the templates in `snowflake/`
+2. **Use environment variables** for sensitive configurations
+3. **Test locally** before committing template changes
+4. **Follow the execution order** specified in the README files
+5. **Review generated files** before deployment to production
 
 ## Monitoring & Observability
 
