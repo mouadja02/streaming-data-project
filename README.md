@@ -24,10 +24,9 @@ During this project, I've gained hands-on experience with:
 
 **Hybrid Cloud Architecture**: Demonstrates modern data warehouse patterns by combining AWS services with Snowflake for optimal performance and flexibility.
 
-## Project Architecture & Data Flow
 
-The project implements a comprehensive multi-layer data pipeline following the medallion architecture:
-
+## Project Data Flow
+The project implements a multi-layer data pipeline following the medallion architecture:
 ![Project Flow](project_flow.gif)
 
 ### Data Pipeline Layers
@@ -65,15 +64,15 @@ The project implements a comprehensive multi-layer data pipeline following the m
 - **Snowflake connectivity** and data consumption layer
 - **Real-time streaming** pipeline foundation with Kafka
 - **Data quality framework** with scoring and validation
-- **Automated deployment** via GitHub Actions CI/CD
+- **Simple automated deployment** via GitHub Actions CI/CD
 
 ### 🔄 Planned Enhancements
 
-- **Visualization Tools**: Apache Superset and Microsoft Power BI integration
-- **Workflow Orchestration**: Apache Airflow for pipeline scheduling and monitoring
-- **Alternative Stack**: Migration to Databricks + Delta Lake for comparison
+- **Visualization tools**: Apache Superset and Microsoft Power BI integration
+- **Workflow orchestration**: Apache Airflow for pipeline scheduling and monitoring
+- **Alternative stack**: Migration to Databricks + Delta Lake for comparison
 - **Multi-Cloud**: Azure cloud provider exploration
-- **Advanced Streaming**: Apache Flink for complex event processing
+- **Advanced streaming**: Apache Flink for complex event processing
 - **Monitoring**: Data quality alerts and pipeline observability
 - **DevOps**: Enhanced CI/CD with infrastructure as code
 
