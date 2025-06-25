@@ -47,7 +47,7 @@ FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
--- Data Quality Summary (from Glue Job 1)
+-- Data Quality Summary (from Glue Job 1) 
 -- -------------------------------------------------------------------------
 CREATE EXTERNAL TABLE IF NOT EXISTS ${SNOWFLAKE_DATABASE}.SILVER_LAYER.data_quality_summary_ext (
     total_records NUMBER AS (value:total_records::NUMBER),
