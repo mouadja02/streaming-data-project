@@ -225,12 +225,11 @@ As this is an educational project, I welcome:
 
 ### Common Issues
 - **Docker services not starting**: Check port availability and Docker daemon
-- **AWS permissions**: Verify IAM roles and policies for Glue and S3 access
+- **AWS permissions**: Verify IAM roles and policies for Glue and S3 access (That was the main bug source for me)
 - **Snowflake connectivity**: Validate credentials and network access
 - **Data quality issues**: Review validation rules and input data format
 
 ### Getting Help
-- Check the `docs/` folder for detailed documentation
 - Review Docker logs: `docker-compose logs`
 - Open an issue with detailed error messages and environment info
 
