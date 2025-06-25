@@ -252,7 +252,7 @@ jobs:
           "MaxRetries": 0,
           "Timeout": 2880,
           "GlueVersion": "4.0",
-          "NumberOfWorkers": 2,
+          "NumberOfWorkers": 3,
           "WorkerType": "G.1X",
           "Tags": {
             "Environment": "production",

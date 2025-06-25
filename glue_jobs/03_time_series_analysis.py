@@ -460,7 +460,7 @@ def save_to_iceberg_table(df: DataFrame, table_name: str, write_mode: str = "app
         except Exception as e2:
             print(f"❌ Alternative method also failed: {str(e2)}")
             # Final fallback to Parquet
-            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}/"
+            fallback_path = f"{args['S3_OUTPUT_PATH']}/{table_name}_parquet/"
             print(f"Final fallback to Parquet at: {fallback_path}")
             df.write.mode(write_mode).parquet(fallback_path)
 
