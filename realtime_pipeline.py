@@ -89,7 +89,7 @@ class SparkUserDataS3Processor:
             folder = folder.strip('/')
             
             # Construct proper S3A path (required for Spark)
-            s3_path = f"s3a://{bucket_name}/{folder}/{filename}"
+            s3_path = f"s3a://{bucket_name}/{folder}"
             
             logger.info(f"📤 Writing Spark DataFrame to S3: {s3_path}")
             
@@ -343,8 +343,8 @@ def run_producer_process():
         start_time = time.time()
         record_count = 0
         
-        logging.info(f"Streaming data to '{topic_name}' for 60 seconds.")
-        while time.time() < start_time + 60:
+        logging.info(f"Streaming data to '{topic_name}' for 180 seconds.")
+        while time.time() < start_time + 180:
             raw_data = get_data()
             if raw_data:
                 formatted_data = format_data(raw_data)
