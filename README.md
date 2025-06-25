@@ -5,7 +5,7 @@ This project automatically fetches random user data from an API, processes it th
 
 ## How It Works
 
-The current architecture of the project is as described below
+The current architecture of the project is as described below : 
 
 <img src="architecture_v3.png" alt="architecture" width="700"/>
 
