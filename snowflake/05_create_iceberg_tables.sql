@@ -9,7 +9,7 @@
 -- -------------------------------------------------------------------------
 -- Transformed Users Data (from Glue Job 1)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.users_transformed_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.users_transformed_ext (
     id STRING AS (value:id::STRING),
     first_name STRING AS (value:first_name::STRING),
     last_name STRING AS (value:last_name::STRING),
@@ -42,14 +42,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.users_tra
     data_source STRING AS (value:data_source::STRING),
     glue_job_name STRING AS (value:glue_job_name::STRING)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/users_transformed_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/users_transformed_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Data Quality Summary (from Glue Job 1)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.data_quality_summary_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.data_quality_summary_ext (
     total_records NUMBER AS (value:total_records::NUMBER),
     high_quality_records NUMBER AS (value:high_quality_records::NUMBER),
     medium_quality_records NUMBER AS (value:medium_quality_records::NUMBER),
@@ -63,14 +63,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.data_qual
     processing_date DATE AS (value:processing_date::DATE),
     glue_job_name STRING AS (value:glue_job_name::STRING)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/data_quality_summary_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/data_quality_summary_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- User Demographics Dimension (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.dim_user_demographics_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.dim_user_demographics_ext (
     user_id STRING AS (value:user_id::STRING),
     age_group STRING AS (value:age_group::STRING),
     generation STRING AS (value:generation::STRING),
@@ -87,14 +87,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.dim_user_
     dim_updated_at TIMESTAMP AS (value:dim_updated_at::TIMESTAMP),
     is_current BOOLEAN AS (value:is_current::BOOLEAN)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/dim_user_demographics_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/dim_user_demographics_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Geographic Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_geographic_analysis_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_geographic_analysis_ext (
     geographic_level STRING AS (value:geographic_level::STRING),
     analysis_type STRING AS (value:analysis_type::STRING),
     user_count NUMBER AS (value:user_count::NUMBER),
@@ -108,14 +108,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_geog
     user_count_rank NUMBER AS (value:user_count_rank::NUMBER),
     created_at TIMESTAMP AS (value:created_at::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/fact_geographic_analysis_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/fact_geographic_analysis_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Age/Generation Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_age_generation_analysis_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_age_generation_analysis_ext (
     age_group STRING AS (value:age_group::STRING),
     generation STRING AS (value:generation::STRING),
     gender STRING AS (value:gender::STRING),
@@ -137,14 +137,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_age_
     engagement_tier STRING AS (value:engagement_tier::STRING),
     created_at TIMESTAMP AS (value:created_at::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/fact_age_generation_analysis_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/fact_age_generation_analysis_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Email Provider Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_email_provider_analysis_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_email_provider_analysis_ext (
     email_provider_type STRING AS (value:email_provider_type::STRING),
     processing_date DATE AS (value:processing_date::DATE),
     total_users NUMBER AS (value:total_users::NUMBER),
@@ -155,14 +155,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_emai
     analysis_level STRING AS (value:analysis_level::STRING),
     created_at TIMESTAMP AS (value:created_at::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/fact_email_provider_analysis_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/fact_email_provider_analysis_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Email Domain Analysis Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_email_domain_analysis_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_email_domain_analysis_ext (
     email_domain STRING AS (value:email_domain::STRING),
     email_provider_type STRING AS (value:email_provider_type::STRING),
     processing_date DATE AS (value:processing_date::DATE),
@@ -178,14 +178,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_emai
     analysis_level STRING AS (value:analysis_level::STRING),
     created_at TIMESTAMP AS (value:created_at::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/fact_email_domain_analysis_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/fact_email_domain_analysis_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Data Quality Metrics Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_data_quality_metrics_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_data_quality_metrics_ext (
     total_records NUMBER AS (value:total_records::NUMBER),
     excellent_quality NUMBER AS (value:excellent_quality::NUMBER),
     good_quality NUMBER AS (value:good_quality::NUMBER),
@@ -207,14 +207,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_data
     data_completeness_score NUMBER AS (value:data_completeness_score::NUMBER),
     created_at TIMESTAMP AS (value:created_at::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/fact_data_quality_metrics_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/fact_data_quality_metrics_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Quality by Segment Fact Table (from Glue Job 2)
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_quality_by_segment_ext (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.SILVER_LAYER.fact_quality_by_segment_ext (
     age_group STRING AS (value:age_group::STRING),
     generation STRING AS (value:generation::STRING),
     processing_date DATE AS (value:processing_date::DATE),
@@ -226,6 +226,6 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.fact_qual
     segment_phone_validity_rate NUMBER AS (value:segment_phone_validity_rate::NUMBER),
     created_at TIMESTAMP AS (value:created_at::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${SILVER_LAYER}.iceberg_stage/fact_quality_by_segment_parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.SILVER_LAYER.iceberg_stage/fact_quality_by_segment_parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE; 

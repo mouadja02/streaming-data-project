@@ -90,10 +90,6 @@ SNOWFLAKE_USER=your_user
 SNOWFLAKE_PASSWORD=your_password
 SNOWFLAKE_ACCOUNT=your_account
 
-# Medallion Architecture Layers (Schema names within SNOWFLAKE_DATABASE)
-BRONZE_LAYER=bronze_layer_name
-SILVER_LAYER=silver_layer_name
-GOLD_LAYER=gold_layer_name
 ```
 
 Then run:

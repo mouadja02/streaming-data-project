@@ -7,7 +7,7 @@
 -- -------------------------------------------------------------------------
 -- Bronze Table 1: Raw Users Data
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_raw_users (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_raw_users (
     id STRING AS (value:id::STRING),
     first_name STRING AS (value:first_name::STRING),
     last_name STRING AS (value:last_name::STRING),
@@ -21,14 +21,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_raw_u
     phone STRING AS (value:phone::STRING),
     picture STRING AS (value:picture::STRING)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.data_lake_stage/users/raw/parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.BRONZE_LAYER.data_lake_stage/users/raw/parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Bronze Table 2: User Analytics Data
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_user_analytics (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_analytics (
     gender STRING AS (value:gender::STRING),
     count NUMBER AS (value:count::NUMBER),
     percentage NUMBER AS (value:percentage::NUMBER),
@@ -37,14 +37,14 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_user_
     domain_percentage NUMBER AS (value:domain_percentage::NUMBER),
     processing_timestamp TIMESTAMP AS (value:processing_timestamp::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.data_lake_stage/users/analytics/parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.BRONZE_LAYER.data_lake_stage/users/analytics/parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- -------------------------------------------------------------------------
 -- Bronze Table 3: User Demographics Data
 -- -------------------------------------------------------------------------
-CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_user_demographics (
+CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_demographics (
     country STRING AS (value:country::STRING),
     state STRING AS (value:state::STRING),
     user_count NUMBER AS (value:user_count::NUMBER),
@@ -53,12 +53,12 @@ CREATE OR REPLACE EXTERNAL TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_user_
     female_percentage NUMBER AS (value:female_percentage::NUMBER),
     processing_timestamp TIMESTAMP AS (value:processing_timestamp::TIMESTAMP)
 )
-LOCATION = @${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.data_lake_stage/users/demographics/parquet/
+LOCATION = @${SNOWFLAKE_DATABASE}.BRONZE_LAYER.data_lake_stage/users/demographics/parquet/
 FILE_FORMAT = (TYPE = PARQUET)
 AUTO_REFRESH = TRUE;
 
 -- Examine created external tables
 SHOW EXTERNAL TABLES;
-DESCRIBE TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_raw_users;
-DESCRIBE TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_user_analytics;
-DESCRIBE TABLE ${SNOWFLAKE_DATABASE}.${BRONZE_LAYER}.ext_user_demographics; 
+DESCRIBE TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_raw_users;
+DESCRIBE TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_analytics;
+DESCRIBE TABLE ${SNOWFLAKE_DATABASE}.BRONZE_LAYER.ext_user_demographics; 

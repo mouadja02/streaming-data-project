@@ -56,10 +56,6 @@ SNOWFLAKE_WAREHOUSE=your_warehouse
 SNOWFLAKE_DATABASE=your_database
 SNOWFLAKE_SCHEMA=your_schema
 
-# Medallion Architecture Layers (Schema names within SNOWFLAKE_DATABASE)
-BRONZE_LAYER=bronze_layer_name
-SILVER_LAYER=silver_layer_name
-GOLD_LAYER=gold_layer_name
 
 # AWS Role for Snowflake Integration
 AWS_ROLE_ARN=arn:aws:iam::your_account_id:role/snowflake-s3-role
@@ -81,7 +77,7 @@ git push origin main
 After deployment, use the analytics queries:
 ```sql
 -- Copy queries from 06_analytics_queries.sql
--- Replace ${SNOWFLAKE_DATABASE}, ${BRONZE_LAYER}, and ${SILVER_LAYER} with your actual values
+-- Replace ${SNOWFLAKE_DATABASE}, BRONZE_LAYER, and SILVER_LAYER with your actual values
 -- Example: your_database.bronze_schema.table_name
 ```
 
