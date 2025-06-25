@@ -16,7 +16,6 @@ CREATE STORAGE INTEGRATION IF NOT EXISTS s3_iceberg_integration
 -- Note: Run this manually to get the STORAGE_AWS_EXTERNAL_ID for your AWS role trust policy
 DESC STORAGE INTEGRATION s3_iceberg_integration;
 
-
 -- Create stage for Iceberg tables
 CREATE STAGE IF NOT EXISTS iceberg_stage
   STORAGE_INTEGRATION = s3_iceberg_integration
