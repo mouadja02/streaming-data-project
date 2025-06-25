@@ -1,6 +1,6 @@
--- =========================================================================
+-- ========================================================================
 -- Snowflake Storage Integration and Stage Setup
--- =========================================================================
+-- ========================================================================
 -- This script sets up the S3 storage integration and stages for Iceberg tables
 -- Environment variables will be substituted during CI/CD deployment
 
