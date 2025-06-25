@@ -239,61 +239,6 @@ def setup_snowflake_tables():
         connector.close()
 
 
-def run_sample_queries():
-    """Execute sample queries to demonstrate the data"""
-    connector = SnowflakeConnector()
-    
-    try:
-        if not connector.connect():
-            return False
-        
-        logger.info("Running sample queries...")
-        
-        # Simple test queries
-        test_queries = [
-            ("Total Users", "SELECT COUNT(*) as total_users FROM ext_raw_users"),
-            ("Gender Distribution", """
-                SELECT 
-                    metric_name,
-                    metric_value as count,
-                    percentage
-                FROM ext_user_analytics 
-                WHERE metric_type = 'gender_distribution'
-                ORDER BY metric_value DESC
-            """),
-            ("Top Countries", """
-                SELECT 
-                    demographic_value as country,
-                    user_count
-                FROM ext_user_demographics
-                WHERE demographic_type = 'country_distribution'
-                ORDER BY user_count DESC
-                LIMIT 5
-            """)
-        ]
-        
-        for query_name, query in test_queries:
-            print(f"\n--- {query_name} ---")
-            results = connector.execute_query(query)
-            if results:
-                for row in results:
-                    print(f"  {row}")
-            else:
-                print("  No results")
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"Query execution failed: {e}")
-        return False
-    finally:
-        connector.close()
-
 
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1 and sys.argv[1] == "query":
-        run_sample_queries()
-    else:
-        setup_snowflake_tables() 
+    setup_snowflake_tables() 
